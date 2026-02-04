@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Monitoring Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/subscription.css" />
+  <!-- Leaflet libraries will be loaded dynamically by map.js -->
+</head>
+
+<body>
+  <script>
+    // Emergency Service Worker Unregistration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        if (registrations.length > 0) {
+          for (let registration of registrations) {
+            registration.unregister().then(() => {
+              console.log('[SW] Kill-switch activated. Unregistered.');
+              window.location.reload();
+            });
+          }
+        }
+      });
+      if (window.caches) {
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
+        });
+      }
+    }
+  </script>
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="logo">
+      <span class="logo-icon">🌱</span>
+      <span class="logo-text">JuanTreePH</span>
+    </div>
+    <div class="mobile-menu-btn" id="mobileMenuBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="user-profile" id="userProfileTrigger">
+
+      <div class="user-avatar" id="navUserAvatar">?</div>
+      <span class="user-name" id="navUserName">Setup Profile</span>
+
+      <!-- Profile Dropdown Menu -->
+      <div class="profile-dropdown" id="profileDropdown">
+        <div class="dropdown-header">
+          <p class="dropdown-label" id="dropdownRoleLabel">Account Menu</p>
+        </div>
+        <div class="dropdown-items">
+          <button class="dropdown-item" id="btnAdminPanel"
+            style="display: none; background: #eafaf1; color: #27ae60; border: 1px solid #27ae60;">
+            <span class="item-icon">🛠</span>
+            <span>Admin Panel</span>
+          </button>
+          <button class="dropdown-item" id="btnStewardship">
+            <span class="item-icon">🌳</span>
+            <span>Stewardship's Grove</span>
+          </button>
+          <button class="dropdown-item" id="btnNotifications">
+            <span class="item-icon">🔔</span>
+            <span>Notifications</span>
+            <span id="notifBadge" class="notification-badge-dot" style="display: none;"></span>
+          </button>
+          <a href="settings.html" class="dropdown-item" id="btnSettings">
+            <span class="item-icon">⚙️</span>
+            <span>Settings</span>
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout" id="btnLogout">
+            <span class="item-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <ul class="sidebar-menu">
+        <li>
+          <a href="#" class="menu-item active" data-page="dashboard">
+            <span class="icon">📊</span>
+            <span class="menu-text">Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="plants">
+            <span class="icon">🌿</span>
+            <span class="menu-text">My Plants</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="map">
+            <span class="icon">🗺️</span>
+            <span class="menu-text">Farm Map</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="doctor">
+            <span class="icon">🩺</span>
+            <span class="menu-text">Plant Doctor</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="messages">
+            <span class="icon">💬</span>
+            <span class="menu-text">Messages</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="stewards">
+            <span class="icon">🕵️</span>
+            <span class="menu-text">Stewards</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="#" class="menu-item" data-page="community">
+            <span class="icon">👥</span>
+            <span class="menu-text">Community</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu-item" data-page="subscription">
+            <span class="icon">👑</span>
+            <span class="menu-text">Subscription</span>
+          </a>
+        </li>
+
+      </ul>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content">
+      <div class="content-top">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <span id="crumbs">Home</span>
+        </nav>
+      </div>
+      <div id="globalAlertBanner" class="global-alert-banner" style="display: none;">
+        <span class="alert-icon">⚠️</span>
+        <span id="alertBannerText" class="alert-text"></span>
+        <button class="close-alert" id="closeAlertBanner">&times;</button>
+      </div>
+
+      <!-- Stewards Content -->
+      <div id="stewardsContent" class="content-section">
+        <div class="page-header">
+          <h2>Find a Steward</h2>
+          <p>Discover professional caretakers for your plants</p>
+        </div>
+        <div class="toolbar">
+          <input id="stewardSearch" class="input" type="search" placeholder="Search stewards by name or specialty..."
+            autocomplete="off" />
+        </div>
+        <div id="stewardsList" class="stewards-grid">
+          <!-- Loaded by JS -->
+          <div class="empty-state">Loading stewards...</div>
+        </div>
+      </div>
+
+      <!-- Subscription Content -->
+      <div id="subscriptionContent" class="content-section">
+        <div class="page-header">
+          <h2>Subscription & Plan</h2>
+          <p>Manage your account tier and AI usage</p>
+        </div>
+        <div id="subscriptionDetails">
+          <!-- Loaded by UI.js -->
+        </div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboardContent" class="content-section active">
+        <div class="page-header">
+          <h2>Home</h2>
+          <p>Overview of your plant investments</p>
+        </div>
+
+        <!-- Weather Widget -->
+        <div class="weather-widget" id="weatherWidget">
+          <!-- Injected by JS -->
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🌱</div>
+            <div class="stat-info">
+              <h3 id="statTotal">-</h3>
+              <p>Total Plants</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <h3 id="statHealthy">-</h3>
+              <p>Healthy</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🌿</div>
+            <div class="stat-info">
+              <h3 id="statGrowing">-</h3>
+              <p>Growing</p>
+            </div>
+          </div>
+        </div>
+
+
+
+        <h3 class="section-title">Recent Plants</h3>
+        <div class="plants-grid" id="plantsGrid"></div>
+      </div>
+
+      <!-- Community Content -->
+      <div id="communityContent" class="content-section">
+        <div class="page-header">
+          <h2>Community Hub</h2>
+          <p>Connect, share tips, and grow together</p>
+        </div>
+
+        <div class="community-layout">
+          <div class="feed-section">
+            <div class="create-post-card">
+              <div class="post-user-info">
+                <div class="user-avatar mini" id="postUserAvatar">👤</div>
+                <textarea id="communityPostInput" class="post-input" rows="1"
+                  placeholder="Share something with the community..."></textarea>
+              </div>
+
+              <div id="mediaPreviewContainer" class="media-preview-container" style="display: none;">
+                <!-- Preview will be injected here -->
+                <button id="removeMediaBtn" class="remove-media-btn">&times;</button>
+              </div>
+
+              <div class="post-actions-bar">
+                <div class="post-essentials">
+                  <button class="icon-btn" id="btnUploadMedia" title="Upload Photo or Video">🖼️</button>
+                  <input type="file" id="communityMediaInput" accept="image/*,video/*" style="display: none;">
+                  <div class="post-tags">
+                    <button class="tag-btn active" data-post-type="Tips">Tips</button>
+                    <button class="tag-btn" data-post-type="Questions">Question</button>
+                    <button class="tag-btn" data-post-type="Showcase">Showcase</button>
+                  </div>
+                </div>
+                <button id="communityPostBtn" class="btn btn-primary">Post</button>
+              </div>
+            </div>
+
+            <div class="feed-header-actions">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="communitySearchInput" placeholder="Search posts...">
+              </div>
+              <div class="feed-filters">
+                <button class="feed-filter active" data-feed-filter="All">All</button>
+                <button class="feed-filter" data-feed-filter="Tips">Tips</button>
+                <button class="feed-filter" data-feed-filter="Questions">Questions</button>
+                <button class="feed-filter" data-feed-filter="Showcase">Showcase</button>
+              </div>
+              <select id="communitySortSelect" class="sort-select">
+                <option value="Newest">Newest</option>
+                <option value="Popular">Popular</option>
+              </select>
+            </div>
+
+            <div id="communityFeed" class="community-feed">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <div class="community-sidebar">
+            <div class="comm-card">
+              <h3>Trending Topics</h3>
+              <ul class="trend-list">
+                <li>#OrganicFarming</li>
+                <li>#PestControl</li>
+                <li>#Hydroponics</li>
+                <li>#UrbanGardening</li>
+              </ul>
+            </div>
+            <div class="comm-card">
+              <h3>Top Contributors</h3>
+              <div class="contributor-row">
+                <span>🥇</span> <span>Maria Santos</span>
+              </div>
+              <div class="contributor-row">
+                <span>🥈</span> <span>Elena Reyes</span>
+              </div>
+              <div class="contributor-row">
+                <span>🥉</span> <span>Juan Dela Cruz</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Plants Content -->
+      <div id="plantsContent" class="content-section">
+        <div class="page-header">
+          <h2>My Plants</h2>
+          <p>View and manage all your plant investments</p>
+        </div>
+        <div class="toolbar">
+          <input id="plantSearch" class="input" type="search" placeholder="Search plants (name, location, status)..."
+            autocomplete="off" />
+          <select id="plantSort" class="select" aria-label="Sort plants">
+            <option value="name-asc">Sort: Name (A→Z)</option>
+            <option value="name-desc">Sort: Name (Z→A)</option>
+            <option value="height-desc">Sort: Height (High→Low)</option>
+            <option value="height-asc">Sort: Height (Low→High)</option>
+          </select>
+        </div>
+        <div class="chips" role="group" aria-label="Filters">
+          <button class="chip active" type="button" data-filter="all">
+            All
+          </button>
+          <button class="chip" type="button" data-filter="healthy">
+            Healthy
+          </button>
+          <button class="chip" type="button" data-filter="growing">
+            Growing
+          </button>
+          <button class="chip" type="button" data-filter="attention">
+            Attention
+          </button>
+          <button class="chip chip-ghost" type="button" id="clearPlantFilters">
+            Clear
+          </button>
+        </div>
+        <div id="plantsEmpty" class="empty" style="display: none">
+          <h3>No plants found</h3>
+          <p>Try clearing search/filters.</p>
+          <button class="btn" type="button" id="clearPlantsBtn">Clear</button>
+        </div>
+        <div id="plantsSkeleton" class="skeleton-grid" aria-hidden="true"></div>
+        <div class="plants-grid" id="allPlantsGrid"></div>
+      </div>
+
+      <!-- TASKS Content -->
+      <div id="tasksContent" class="content-section">
+        <div class="page-header">
+          <h2>Care Tasks</h2>
+          <p>Manage daily farm operations and schedules</p>
+        </div>
+        <div class="tasks-layout">
+          <div class="tasks-list-panel">
+            <h3>To-Do List</h3>
+            <div id="todoList" class="todo-list"></div>
+          </div>
+          <div class="tasks-calendar-panel">
+            <h3>Schedule</h3>
+            <div id="miniCalendar" class="mini-calendar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financials Content -->
+      <div id="financialsContent" class="content-section">
+        <div class="page-header">
+          <h2>Financial Analytics</h2>
+          <p>Track ROI and Yield Forecasts</p>
+        </div>
+        <div class="financials-grid">
+          <div class="fin-card highlight">
+            <h3>Current Valuation</h3>
+            <div class="fin-value" id="finCurrentVal">$0</div>
+            <div class="fin-change">+12% vs last month</div>
+          </div>
+          <div class="fin-card">
+            <h3>Total Investment</h3>
+            <div class="fin-value" id="finTotalInv">$0</div>
+          </div>
+          <div class="fin-card">
+            <h3>ROI</h3>
+            <div class="fin-value" id="finRoi">0%</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Value Projection</h3>
+            <div class="chart-placeholder" id="projectionChart">
+              <!-- Simple visual bars rendered by JS -->
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Portfolio Breakdown</h3>
+            <div class="chart-placeholder" id="breakdownChart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Content -->
+      <div id="mapContent" class="content-section">
+        <div class="page-header">
+          <h2>Farm Map</h2>
+          <p>Interactive zone visualization</p>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-controls-bar">
+          <div class="map-control-group">
+            <label>🗺️ Map Type:</label>
+            <select id="mapTypeSelector" class="select">
+              <option value="street">Street</option>
+              <option value="satellite">Satellite</option>
+            </select>
+          </div>
+
+          <div class="map-control-group">
+            <label>🌱 Filter Plants:</label>
+            <button class="chip active" data-plant-filter="all">All</button>
+            <button class="chip" data-plant-filter="healthy">Healthy</button>
+            <button class="chip" data-plant-filter="growing">Growing</button>
+            <button class="chip" data-plant-filter="attention">Attention</button>
+          </div>
+
+          <div class="map-control-group">
+            <label>🔧 Tools:</label>
+            <button class="btn btn-sm" id="toggleDrawing">✏️ Draw</button>
+            <button class="btn btn-sm" id="toggleHeatmap">🌡️ Heatmap</button>
+            <button class="btn btn-sm" id="toggleClustering">📍 Cluster</button>
+          </div>
+        </div>
+
+        <div class="map-layout">
+          <div class="map-container" id="farmMap">
+            <!-- Map rendered here -->
+          </div>
+
+          <!-- Analytics Sidebar -->
+          <div class="map-analytics-panel" id="analyticsPanel" style="display: none;">
+            <div class="analytics-header">
+              <h3>Zone Analytics</h3>
+              <button class="close-btn" id="closeAnalytics">×</button>
+            </div>
+            <div id="analyticsContent" class="analytics-content">
+              <p>Click a zone to view details</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <span class="legend-item" data-status="healthy"><span class="dot good"></span> Good</span>
+          <span class="legend-item" data-status="growing"><span class="dot warning"></span> Warning</span>
+          <span class="legend-item" data-status="attention"><span class="dot alert"></span> Alert</span>
+        </div>
+      </div>
+
+      <!-- Doctor Content -->
+      <div id="doctorContent" class="content-section">
+        <div class="page-header">
+          <h2>Plant Doctor</h2>
+          <p>AI-powered diagnosis and plant health tracking</p>
+        </div>
+        <div class="doctor-layout">
+          <div class="doctor-chat">
+            <div class="chat-display" id="doctorChatDisplay">
+              <div class="bot-msg">Hello! I'm your AI Plant Doctor. Upload a photo or describe a symptom to get
+                started.
+              </div>
+              <div class="bot-msg">You can ask me about pests, diseases, or general care tips!</div>
+            </div>
+            <div class="doctor-input-area">
+              <input type="file" id="doctorFileInput" accept="image/*" style="display: none;">
+              <button class="icon-btn" id="btnDoctorCamera" title="Upload Photo">📷</button>
+              <input type="text" id="doctorInput" placeholder="Describe symptoms or ask a question...">
+              <button class="send-btn" id="doctorSendBtn">Send</button>
+            </div>
+          </div>
+          <div class="issue-log">
+            <h3>Recent Diagnoses</h3>
+            <div id="issueLogList" class="issue-list">
+              <div style="padding: 20px; text-align: center; color: #94a3b8;">
+                Loading diagnoses...
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Plant Details Content -->
+      <div id="plantDetailsContent" class="content-section">
+        <button class="back-btn" id="backToPlants">← Back to Plants</button>
+        <div id="plantDetailsContainer"></div>
+      </div>
+
+      <!-- Messages Content -->
+      <div id="messagesContent" class="content-section">
+        <div class="page-header">
+          <h2>Messages</h2>
+          <p>Communicate with farmers, experts, and investors</p>
+        </div>
+
+        <div class="messaging-container">
+          <div class="contacts-panel">
+            <div class="contacts-header">
+              <h3>
+                Contacts <span id="unreadTotal" class="pill-inline"></span>
+              </h3>
+            </div>
+            <div class="contacts-search">
+              <input id="contactSearch" class="input" type="search" placeholder="Search contacts..."
+                autocomplete="off" />
+            </div>
+            <div class="contacts-list" id="contactsList"></div>
+          </div>
+
+          <div class="chat-panel">
+            <div class="chat-mobile-back" id="chatMobileBack">
+              <button class="btn-link" type="button">← Contacts</button>
+            </div>
+            <div class="chat-header" id="chatHeader">
+              <div class="empty-state-message">
+                Select a contact to start messaging
+              </div>
+            </div>
+            <div class="messages-area" id="messagesArea">
+              <div class="empty-state-message">No messages yet</div>
+            </div>
+            <div class="typing" id="typingIndicator" style="display: none">
+              Typing…
+            </div>
+            <div class="message-input-area" id="messageInputArea" style="display: none">
+              <input type="text" id="messageInput" placeholder="Type a message..." />
+              <button id="sendBtn" class="send-btn">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </main>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <img id="modalImage" src="" alt="Plant Image" />
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div id="notificationsModal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content notification-modal-content">
+      <div class="modal-header">
+        <h3><span class="icon">🔔</span> Notifications</h3>
+        <span class="close-modal" id="closeNotifications">&times;</span>
+      </div>
+      <div class="modal-body" id="notificationsList">
+        <!-- Injected by JS -->
+        <div class="empty-state">
+          <p>No new notifications</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="js/data.js"></script>
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/auth-interceptor.js"></script>
+  <script src="js/plantdoctor.js"></script>
+  <script type="module" src="js/dashboard.js?v=5"></script>
+</body>
+
+</html>

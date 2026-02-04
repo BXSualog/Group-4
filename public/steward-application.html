@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Stewardship</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .application-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card-header h1 {
+            color: #1e293b;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #27ae60;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #219150;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #27ae60;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="application-card">
+        <div class="card-header">
+            <span style="font-size: 40px;">🌳</span>
+            <h1>Join the Stewardship</h1>
+            <p>Share your expertise and help others grow.</p>
+        </div>
+
+        <form id="stewardApplicationForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" class="form-input" required placeholder="e.g. Juan dela Cruz">
+            </div>
+
+            <div class="form-group">
+                <label for="experience">Years of Farming Experience</label>
+                <input type="number" id="experience" class="form-input" required min="0" placeholder="e.g. 5">
+            </div>
+
+            <div class="form-group">
+                <label for="certifications">Certifications or Qualifications (Optional)</label>
+                <input type="text" id="certifications" class="form-input"
+                    placeholder="e.g. NCII Organic Agriculture, BS Agriculture">
+            </div>
+
+            <div class="form-group">
+                <label for="reason">Why do you want to be a steward?</label>
+                <textarea id="reason" class="form-textarea" required
+                    placeholder="Tell us about yourself and your passion for farming..."></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-submit">Submit Application</button>
+            <a href="dashboard.html" class="back-link">Cancel and back to Dashboard</a>
+            <a href="#" id="btnLogout" class="back-link" style="margin-top: 10px;">Logout</a>
+        </form>
+    </div>
+
+    <script type="module" src="js/auth-interceptor.js"></script>
+    <script type="module">
+        import { API_BASE_URL } from './js/config.js';
+        import * as ui from './js/ui.js';
+
+        document.getElementById("stewardApplicationForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("submitBtn");
+            btn.disabled = true;
+            btn.textContent = "Submitting...";
+
+            const email = localStorage.getItem("pm_user_email");
+
+            const payload = {
+                email,
+                full_name: document.getElementById("fullName").value,
+                experience_years: Number(document.getElementById("experience").value),
+                certifications: document.getElementById("certifications").value,
+                reason: document.getElementById("reason").value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/steward/apply`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    await ui.alert("Success!", "Application submitted! We will review it shortly.");
+                    window.location.href = "dashboard.html";
+                } else {
+                    const data = await res.json();
+                    await ui.alert("Error", (data.error || "Submission failed"));
+                    btn.disabled = false;
+                    btn.textContent = "Submit Application";
+                }
+            } catch (err) {
+                console.error(err);
+                await ui.alert("Error", "Network error occurred.");
+                btn.disabled = false;
+                btn.textContent = "Submit Application";
+            }
+        });
+        document.getElementById("btnLogout")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            ui.handleLogout();
+        });
+    </script>
+</body>
+
+</html>

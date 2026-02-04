@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Plant Monitoring System</title>
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+
+<body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister().then(() => {
+            console.log('[SW] Unregistered from Login');
+            window.location.reload();
+          });
+        }
+      });
+      if (window.caches) {
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
+        });
+      }
+    }
+  </script>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-icon">🌱</div>
+        <h1>JuanTreePH</h1>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-row">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required />
+            <button class="toggle-btn" type="button" id="togglePassword" aria-label="Show password">
+              Show
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="check">
+            <input type="checkbox" id="rememberMe" />
+            <span>Remember me</span>
+          </label>
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+
+        <div class="auth-switch">
+          <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
+        </div>
+      </form>
+
+      <!-- Registration Form (Hidden by default) -->
+      <form id="registerForm" class="auth-form hidden">
+        <div class="form-group">
+          <label for="reg-email">Gmail Address</label>
+          <input type="email" id="reg-email" name="email" placeholder="Enter your Gmail" required />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <div class="password-row">
+            <input type="password" id="reg-password" name="password" placeholder="Create a password" required />
+            <button class="toggle-btn" type="button" id="toggleRegPassword" aria-label="Show password">
+              Show
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <div class="password-row">
+            <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password"
+              required />
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn">Register</button>
+
+        <div class="auth-switch">
+          <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+        </div>
+      </form>
+
+      <div class="login-footer">
+        <p>For access requests, contact your administrator</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/auth-interceptor.js"></script>
+  <script src="js/index.js?v=2"></script>
+</body>
+
+</html>

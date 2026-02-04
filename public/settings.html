@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings - JuanTreePH</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="logo">
+            <span class="logo-icon">🌱</span>
+            <span class="logo-text">JuanTreePH</span>
+        </div>
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="user-profile" id="userProfileTrigger">
+            <div class="user-avatar" id="navUserAvatar">?</div>
+            <span class="user-name" id="navUserName">Loading...</span>
+
+            <!-- Profile Dropdown Menu -->
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="dropdown-header">
+                    <p class="dropdown-label" id="dropdownRoleLabel">Account Menu</p>
+                </div>
+                <div class="dropdown-items">
+                    <a href="dashboard.html" class="dropdown-item">
+                        <span class="item-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <button class="dropdown-item logout" id="btnLogout">
+                        <span class="item-icon">🚪</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+
+
+        <!-- Content Area -->
+        <main class="content">
+            <div class="centered-layout">
+                <div class="content-top">
+                    <nav class="breadcrumbs" aria-label="Breadcrumb">
+                        <span>Home</span> / <span>Settings</span>
+                    </nav>
+                </div>
+
+                <!-- Settings Content -->
+                <div id="settingsContent" class="content-section active">
+                    <div class="page-header">
+                        <h2>Settings</h2>
+                        <p>Manage your profile, preferences, and security</p>
+                    </div>
+
+                    <div class="settings-tabs"
+                        style="display: flex; justify-content: flex-start; gap: 16px; margin-bottom: 40px; border-bottom: none;">
+                        <button class="settings-tab active" data-tab="identity">
+                            <span class="icon">👤</span> Identity
+                        </button>
+                        <button class="settings-tab" data-tab="preferences">
+                            <span class="icon">🌓</span> Preferences
+                        </button>
+                        <button class="settings-tab" data-tab="security">
+                            <span class="icon">🔒</span> Security
+                        </button>
+                        <button class="settings-tab" data-tab="data">
+                            <span class="icon">📥</span> Data
+                        </button>
+                    </div>
+
+                    <div class="settings-body"
+                        style="background: var(--bg-primary); border-radius: var(--radius-xl); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); overflow: hidden;">
+                        <!-- Identity Tab -->
+                        <div class="settings-section active" id="tab-identity">
+                            <h2>Profile Identity</h2>
+                            <p class="section-desc">Customize how you appear to others in the grove.</p>
+
+                            <form id="settingsProfileForm">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="settingsUsername" placeholder="Enter your full name"
+                                        readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label>About You</label>
+                                    <textarea id="settingsBio" placeholder="Tell us about your interest in plants..."
+                                        rows="3"></textarea>
+                                </div>
+                                <div class="form-group"
+                                    style="border-top: 1px solid var(--gray-100); padding-top: 24px;">
+                                    <label style="margin-bottom: 12px;">Avatar Selection</label>
+                                    <div class="avatar-grid" id="settingsAvatarGrid">
+                                        <div class="avatar-opt" data-avatar="👨‍🌾">👨‍🌾</div>
+                                        <div class="avatar-opt" data-avatar="👩‍🌾">👩‍🌾</div>
+                                        <div class="avatar-opt" data-avatar="🌿">🌿</div>
+                                        <div class="avatar-opt" data-avatar="🌳">🌳</div>
+                                        <div class="avatar-opt" data-avatar="🌻">🌻</div>
+                                        <div class="avatar-opt" data-avatar="🌵">🌵</div>
+                                    </div>
+                                </div>
+                                <div style="padding-top: 24px; border-top: 1px solid var(--gray-100);">
+                                    <button type="submit" class="btn btn-primary"
+                                        style="padding: 14px 32px; font-weight: 700;">Save Profile</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Preferences Tab -->
+                        <div class="settings-section" id="tab-preferences">
+                            <h2>UI Preferences</h2>
+                            <p class="section-desc">Personalize your dashboard experience.</p>
+
+                            <div class="settings-group">
+                                <h3>Theme Mode</h3>
+                                <div class="theme-grid">
+                                    <div class="theme-card active" data-theme="light">
+                                        <div class="theme-preview light"></div>
+                                        <span>Light</span>
+                                    </div>
+                                    <div class="theme-card" data-theme="dark">
+                                        <div class="theme-preview dark"></div>
+                                        <span>Dark</span>
+                                    </div>
+                                    <div class="theme-card" data-theme="solar">
+                                        <div class="theme-preview solar"></div>
+                                        <span>Solar</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Environmental Units Removed -->
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div class="settings-section" id="tab-security">
+                            <h2>Security & Session</h2>
+                            <p class="section-desc">Manage your password and account protection.</p>
+
+                            <form id="passwordForm">
+                                <div class="form-group">
+                                    <label>Current Password</label>
+                                    <input type="password" id="currentPass" placeholder="••••••••" required />
+                                </div>
+                                <div class="form-group">
+                                    <label>New Password</label>
+                                    <input type="password" id="newPass" placeholder="••••••••" required />
+                                </div>
+                                <div style="padding-top: 16px; border-top: 1px solid var(--gray-100);">
+                                    <button type="submit" class="btn btn-primary"
+                                        style="padding: 14px 32px; font-weight: 700;">Update Password</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Data Tab -->
+                        <div class="settings-section" id="tab-data">
+                            <h2>Data Management</h2>
+                            <p class="section-desc">Your data is yours. Export or delete your record anytime.</p>
+
+                            <div class="data-actions">
+                                <div class="data-card">
+                                    <span class="icon">📊</span>
+                                    <div class="info">
+                                        <h4>Archive & Export</h4>
+                                        <p>Download your plants, tasks, and profile as a JSON file.</p>
+                                    </div>
+                                    <button class="btn btn-outline" id="btnExportData">Export</button>
+                                </div>
+
+                                <div class="data-card danger">
+                                    <span class="icon">⚠️</span>
+                                    <div class="info">
+                                        <h4>Delete Account</h4>
+                                        <p>Permanently remove your data from the grove. This cannot be undone.</p>
+                                    </div>
+                                    <button class="btn btn-danger" id="btnDeleteAccount">Delete Account</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+    <script type="module" src="js/auth-interceptor.js"></script>
+    <script src="js/data.js"></script>
+    <script type="module" src="js/settings.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steward's Grove - Farmer Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/steward.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="z-index: 3000;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 320px; padding: 24px; text-align: center; border-radius: 24px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🤔</div>
+            <h3 id="confirmTitle" style="margin: 0 0 8px; color: #1a2e1a;">Are you sure?</h3>
+            <p id="confirmMessage" style="color: #667e66; margin: 0 0 24px; font-size: 14px;">This action cannot be
+                undone.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="btnConfirmCancel" class="btn btn-outline" style="min-width: 100px;">Cancel</button>
+                <button id="btnConfirmYes" class="btn btn-primary" style="min-width: 100px;">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        .modal-lg .modal-content {
+            width: 90%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+
+        .steward-map-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .map-picker-container {
+            height: 100%;
+            min-height: 400px;
+            background: #eee;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            .steward-map-layout {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+
+            .modal-lg .modal-content {
+                height: auto;
+                min-height: 90vh;
+            }
+
+            .map-picker-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // Emergency unregistration script
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister().then(() => {
+                        console.log('SW Unregistered from HTML block');
+                        window.location.reload();
+                    });
+                }
+            });
+            // Clear caches as well
+            if (window.caches) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+        }
+    </script>
+    <div id="stewardApp" class="steward-container">
+        <!-- Dashboard Content (Show/Hide via JS) -->
+        <div id="enrollmentView" class="enrollment-view" style="display: none;">
+            <div class="enroll-card">
+                <div class="enroll-icon">🌱</div>
+                <h1>Welcome to the Grove</h1>
+                <p>Ready to take the next step? Become a Steward to manage tasks, schedules, and monitor your plants
+                    hands-on.</p>
+                <button id="btnEnroll" class="btn btn-primary btn-lg">Become a Steward</button>
+                <a href="dashboard.html" class="back-link">Return to Dashboard</a>
+            </div>
+        </div>
+
+        <div id="dashboardView" class="steward-dashboard" style="display: none;">
+            <nav class="steward-nav">
+                <div class="logo">
+                    <span class="logo-icon">🌳</span>
+                    <span class="logo-text">Steward's Grove</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="dashboard.html" class="btn-nav-home">
+                        <span>🏠</span>
+                        <span>Home</span>
+                    </a>
+                    <div class="notif-bell" id="btnNotifications">
+                        🔔
+                        <span id="notifBadge" class="notification-badge-dot" style="display: none;"></span>
+                    </div>
+                    <div class="user-profile" id="userProfileTrigger">
+                        <div class="user-avatar" id="stewardAvatar">?</div>
+
+                        <!-- Profile Dropdown Menu -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <p class="dropdown-label">Steward Account</p>
+                            </div>
+                            <div class="dropdown-items">
+                                <a href="settings.html" class="dropdown-item" id="btnEditProfile">
+                                    <span class="item-icon">⚙️</span>
+                                    <span>Settings</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item logout" id="btnLogout">
+                                    <span class="item-icon">🚪</span>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </nav>
+
+            <main class="steward-content">
+                <div id="globalAlertBanner" class="global-alert-banner" style="display: none; margin-bottom: 20px;">
+                    <span class="alert-icon">⚠️</span>
+                    <span id="alertBannerText" class="alert-text"></span>
+                    <button class="close-alert" id="closeAlertBanner">&times;</button>
+                </div>
+                <header class="content-header">
+                    <h2>Operation Center</h2>
+                    <p>Manage your agricultural duties and schedules</p>
+                </header>
+
+                <div class="operational-grid">
+                    <button class="op-card" id="btnTasks">
+                        <span class="op-icon">📋</span>
+                        <span class="op-label">Daily Tasks</span>
+                        <span class="op-count" id="taskPendingCount">-</span>
+                    </button>
+                    <button class="op-card" id="btnSchedule">
+                        <span class="op-icon">📅</span>
+                        <span class="op-label">Schedule</span>
+                        <span class="op-desc">View calendar</span>
+                    </button>
+                    <button class="op-card" id="btnMyGrove">
+                        <span class="op-icon">🌿</span>
+                        <span class="op-label">My Grove</span>
+                        <span class="op-desc">Plant health</span>
+                    </button>
+                    <button class="op-card" id="btnInventory">
+                        <span class="op-icon">📦</span>
+                        <span class="op-label">Inventory</span>
+                        <span class="op-desc">Supplies & Tools</span>
+                    </button>
+                    <button class="op-card" id="btnClients">
+                        <span class="op-icon">🤝</span>
+                        <span class="op-label">My Clients</span>
+                        <span class="op-desc">Communications</span>
+                    </button>
+                    <button class="op-card highlight" id="btnStewardsMap">
+                        <span class="op-icon">🗺️</span>
+                        <span class="op-label">Steward's Map</span>
+                        <span class="op-desc">Add & Locate Plants</span>
+                    </button>
+                </div>
+
+                <section class="activity-section">
+                    <h3>Recent Activity</h3>
+                    <div id="stewardActivityList" class="steward-list">
+                        <div class="empty-state">No recent activities</div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Steward's Map / Add Plant Modal -->
+    <div id="stewardsMapModal" class="modal modal-lg">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">🗺️</span> Steward's Map & Plant Registry</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" style="overflow: hidden; padding: 0;">
+                <div class="steward-map-layout">
+                    <div class="form-panel" style="padding: 20px; overflow-y: auto;">
+                        <h4>Add New Plant</h4>
+                        <p class="text-sm text-muted">Select location on map first, then fill details.</p>
+
+                        <form id="addPlantForm">
+                            <div class="form-group">
+                                <label>Owner / Client</label>
+                                <select id="plantOwnerSelect" class="input" required>
+                                    <option value="">Select Client...</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Plant Name</label>
+                                <input type="text" id="plantName" class="input" placeholder="e.g. Mango Tree #42"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Plant Type</label>
+                                <select id="plantType" class="input">
+                                    <option value="Tree">Tree</option>
+                                    <option value="Shrub">Shrub</option>
+                                    <option value="Vegetable">Vegetable</option>
+                                    <option value="Flower">Flower</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="plantStatus" class="input">
+                                    <option value="healthy">Healthy</option>
+                                    <option value="growing">Growing</option>
+                                    <option value="attention">Needs Attention</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Location Name</label>
+                                <input type="text" id="plantLocationName" class="input" placeholder="e.g. Sector 7">
+                            </div>
+
+                            <input type="hidden" id="plantLat">
+                            <input type="hidden" id="plantLng">
+
+                            <div style="margin-top: 20px;">
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">🌱 Plant It</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="map-panel" style="padding: 10px;">
+                        <div id="stewardMapPick" class="map-picker-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Notification Toasts -->
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content notification-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">🔔</span> Notifications</h3>
+                <span class="close-modal" id="closeNotifications">&times;</span>
+            </div>
+            <div class="modal-body" id="notificationsList">
+                <div class="empty-state">
+                    <p>No new notifications</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Tasks Modal -->
+    <div id="tasksModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header" style="border: none; padding: 24px 24px 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px;">📋</span>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800;">Daily Tasks</h3>
+                    <div class="achievement-container" id="tasksAchievementContainer">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="tasksProgressBar"></div>
+                        </div>
+                        <span class="ring-text" id="ringPercent">0%</span>
+                    </div>
+                </div>
+                <span class="close-modal" style="font-size: 32px;">&times;</span>
+            </div>
+            <div class="modal-filter-bar">
+                <div class="filters-scroll">
+                    <button class="filter-btn active" data-filter="urgent">Urgent</button>
+                    <button class="filter-btn" data-filter="today">Today</button>
+                    <button class="filter-btn" data-filter="all">All Pending</button>
+                    <button class="filter-btn" data-filter="common">Common</button>
+                </div>
+                <div class="express-task-bar">
+                    <input type="text" id="expressTaskInput" placeholder="Quick add task... (e.g. Water Mango #4)" />
+                    <button id="btnExpressAdd">➕</button>
+                </div>
+            </div>
+            <div class="modal-body" id="fullTasksList"></div>
+        </div>
+    </div>
+
+    <div id="scheduleModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content"
+            style="max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px;">📅</span>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800;">Operational Schedule</h3>
+                </div>
+                <span class="close-modal" style="font-size: 32px;">&times;</span>
+            </div>
+
+            <div class="modal-filter-bar"
+                style="flex-direction: row; justify-content: space-between; align-items: center;">
+                <div class="filters-scroll" style="padding: 0;">
+                    <button class="filter-btn active" data-view="calendar">Calendar</button>
+                    <button class="filter-btn" data-view="timeline">Timeline</button>
+                    <button class="filter-btn" data-view="routines">Routines</button>
+                </div>
+                <div id="scheduleNavControls" style="display: flex; align-items: center; gap: 15px;">
+                    <button class="filter-btn" style="padding: 5px 10px;" onclick="changeMonth(-1)">←</button>
+                    <div id="scheduleMonthHeader"
+                        style="font-weight: 700; color: var(--text-primary); min-width: 120px; text-align: center;">
+                        January 2026
+                    </div>
+                    <button class="filter-btn" style="padding: 5px 10px;" onclick="changeMonth(1)">→</button>
+                </div>
+            </div>
+
+            <div class="modal-body" id="scheduleMainView" style="flex: 1; overflow-y: auto; padding: 0;">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- My Grove Modal -->
+    <div id="groveModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">🌿</span> My Grove Analytics</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="stats-overview" id="groveStats"></div>
+                <div class="grove-assigned-list" id="assignedPlantsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventoryModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">📦</span> Supply Inventory</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-sm btn-primary" id="btnOpenAddInventory"
+                        style="padding: 6px 12px; font-size: 13px;">+ Add Item</button>
+                    <span class="close-modal">&times;</span>
+                </div>
+            </div>
+            <div class="modal-body" id="inventoryList"></div>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div id="addInventoryModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3>Add New Inventory Item</h3>
+                <span class="close-modal" id="closeAddInventory">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <form id="addInventoryForm">
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" id="invName" class="input" placeholder="e.g. Tomato Seeds" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="invCategory" class="input">
+                            <option value="Seeds">Seeds</option>
+                            <option value="Fertilizers">Fertilizers</option>
+                            <option value="Pesticides">Pesticides</option>
+                            <option value="Tools">Tools</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Quantity</label>
+                            <input type="number" id="invQty" class="input" value="1" min="0" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Unit</label>
+                            <input type="text" id="invUnit" class="input" placeholder="e.g. kg, pcs, bags" required>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Low Stock Threshold</label>
+                            <input type="number" id="invThreshold" class="input" value="5" min="0">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Cost per Unit ($)</label>
+                            <input type="number" id="invCost" class="input" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Storage Location</label>
+                        <input type="text" id="invLocation" class="input" placeholder="e.g. Shed B, Shelf 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date (Optional)</label>
+                        <input type="date" id="invExpiry" class="input">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Add
+                        Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plant Details & Update Modal -->
+    <div id="plantDetailsModal" class="modal modal-lg">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">🌿</span> Plant Information</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+
+                        <!-- Top: Basic Info & Actions -->
+                        <div
+                            style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div>
+                                <h2 id="pdName" style="margin:0; font-size: 24px; font-weight: 700;">Mango Tree</h2>
+                                <p id="pdLocation" style="color: #666; margin: 4px 0;">📍 Zone 1</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" id="pdBtnUpdate">Request Update</button>
+                            </div>
+                        </div>
+
+                        <!-- Left: Info Cards -->
+                        <div style="flex: 1; min-width: 300px;">
+                            <h4 style="margin-bottom: 15px;">Plant Statistics</h4>
+                            <form id="plantDetailsForm" class="details-grid-form"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+                                <div class="detail-card input-group">
+                                    <label>SIZE</label>
+                                    <input type="text" id="pdSize" class="input-flat" placeholder="undefined">
+                                </div>
+                                <div class="detail-card input-group">
+                                    <label>HEIGHT</label>
+                                    <input type="text" id="pdHeight" class="input-flat" placeholder="null">
+                                </div>
+                                <div class="detail-card input-group">
+                                    <label>AGE</label>
+                                    <input type="text" id="pdAge" class="input-flat" placeholder="null">
+                                </div>
+                                <div class="detail-card input-group">
+                                    <label>SOIL TYPE</label>
+                                    <select id="pdSoil" class="input-flat">
+                                        <option value="" disabled selected>Select Soil Type</option>
+                                        <option value="Loam">Loam</option>
+                                        <option value="Clay">Clay</option>
+                                        <option value="Sandy">Sandy</option>
+                                        <option value="Silt">Silt</option>
+                                        <option value="Peat">Peat</option>
+                                        <option value="Chalk">Chalk</option>
+                                    </select>
+                                </div>
+                                <div class="detail-card input-group" style="grid-column: 1 / -1;">
+                                    <label>LAST WATERED</label>
+                                    <input type="datetime-local" id="pdLastWatered" class="input-flat">
+                                </div>
+                                <div class="detail-card input-group" style="grid-column: 1 / -1;">
+                                    <label>STATUS</label>
+                                    <select id="pdStatus" class="input">
+                                        <option value="healthy">Healthy</option>
+                                        <option value="growing">Growing</option>
+                                        <option value="attention">Needs Attention</option>
+                                    </select>
+                                </div>
+
+                                <div style="grid-column: 1 / -1; margin-top: 10px;">
+                                    <button type="submit" class="btn btn-primary"
+                                        style="width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600;">Save
+                                        Changes</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right: Key Stats / Summary (or Map) -->
+                        <div
+                            style="width: 300px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; height: fit-content;">
+                            <h4 style="margin-top: 0;">Location View</h4>
+                            <div id="pdMapPreview"
+                                style="height: 200px; background: #eee; border-radius: 8px; margin-bottom: 15px;"></div>
+
+                            <!-- Plant Images Section -->
+                            <div style="margin-bottom: 15px;">
+                                <h5 style="margin-bottom: 10px; font-size: 13px; font-weight: 600; color: #555;">Plant
+                                    Images</h5>
+                                <div id="plantImagePreview"
+                                    style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px;">
+                                    <!-- Image previews will appear here -->
+                                </div>
+                                <input type="file" id="plantImageInput" accept="image/*" style="display: none;">
+                                <button type="button" id="btnAddPlantImage" class="btn btn-outline"
+                                    style="width: 100%; padding: 8px; border: 2px dashed #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                    📷 Add Image
+                                </button>
+                            </div>
+
+                            <div class="stat-row"
+                                style="display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                                <span style="color: #666; font-size: 12px; text-transform: uppercase;">Owner</span>
+                                <span style="font-weight: 600; font-size: 16px; color: #2c3e50;"
+                                    id="pdOwnerUsername">User Name</span>
+                                <span style="font-size: 13px; color: #7f8c8d;" id="pdOwner">email@example.com</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Clients Modal -->
+    <div id="clientsModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content op-modal-content">
+            <div class="modal-header">
+                <h3><span class="icon">🤝</span> My Clients</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="clientsList">
+                <div class="empty-state">Loading clients...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastHost" class="toast-host"></div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <img id="modalImage" src="" alt="Plant Image" />
+        </div>
+    </div>
+    <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/auth-interceptor.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/map_functions.js"></script>
+    <script src="js/steward.js"></script>
+</body>
+
+</html>

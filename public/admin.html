@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - JuanTreePH</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="logo">
+      <span class="logo-icon">🌱</span>
+      <span class="logo-text">JuanTreePH</span>
+    </div>
+    <div class="user-profile" id="userProfileTrigger">
+      <div class="user-avatar" id="navUserAvatar">AP</div>
+      <span class="user-name" id="navUserName">Admin Panel</span>
+
+      <!-- Profile Dropdown Menu -->
+      <div class="profile-dropdown" id="profileDropdown">
+        <div class="dropdown-header">
+          <p class="dropdown-label">Admin Menu</p>
+        </div>
+        <div class="dropdown-items">
+          <button class="dropdown-item" id="btnUserHome">
+            <span class="item-icon">🏠</span>
+            <span>User Home</span>
+          </button>
+          <a href="settings.html" class="dropdown-item" id="btnSettings">
+            <span class="item-icon">⚙️</span>
+            <span>Settings</span>
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item logout" id="btnLogout">
+            <span class="item-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <!-- Content Area -->
+    <main class="content">
+      <div class="content-top">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <span id="crumbs">Admin</span>
+        </nav>
+      </div>
+      <div id="adminContent" class="content-section active">
+        <div class="page-header">
+          <h2>Admin Panel</h2>
+          <p>Manage users, plants, and communications</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <section class="stats-grid">
+          <div class="stat-card" id="statUsers">
+            <div class="stat-header">
+              <span class="stat-title">Total Users</span>
+              <div class="stat-icon">👥</div>
+            </div>
+            <div class="stat-value" id="statUsersValue">-</div>
+          </div>
+          <div class="stat-card" id="statPlants">
+            <div class="stat-header">
+              <span class="stat-title">Total Plants</span>
+              <div class="stat-icon secondary">🌱</div>
+            </div>
+            <div class="stat-value" id="statPlantsValue">-</div>
+          </div>
+          <div class="stat-card" id="statApplications">
+            <div class="stat-header">
+              <span class="stat-title">Pending Applications</span>
+              <div class="stat-icon warning">📋</div>
+            </div>
+            <div class="stat-value" id="statApplicationsValue">-</div>
+          </div>
+          <div class="stat-card" id="statAlerts">
+            <div class="stat-header">
+              <span class="stat-title">Active Alerts</span>
+              <div class="stat-icon danger">🔔</div>
+            </div>
+            <div class="stat-value" id="statAlertsValue">-</div>
+          </div>
+        </section>
+
+        <!-- System Communications -->
+        <section class="admin-card admin-card-span" style="margin-bottom: 24px;">
+          <header class="admin-card-header">
+            <div>
+              <h3>System Communications</h3>
+              <p>Send instant alerts or system-wide broadcasts</p>
+            </div>
+            <button class="btn-outline btn-sm" id="btnDebugToast" style="opacity: 0.6;">Test Feedback</button>
+          </header>
+          <div class="comm-tools">
+            <!-- Global Alert (Urgent Banner) -->
+            <div class="comm-section">
+              <div class="header-with-badge">
+                <span class="comm-label alert">Global Alert</span>
+              </div>
+              <textarea id="alertInput" class="input" rows="2"
+                placeholder="Urgent message for top banner..."></textarea>
+              <div class="comm-actions">
+                <button class="btn-danger-fill btn-sm" id="btnSendAlert">Send Alert</button>
+                <button class="btn-outline btn-sm" id="btnClearAlert">Clear</button>
+              </div>
+              <div id="alertStatus" class="comm-status-preview">No active banner</div>
+            </div>
+
+            <!-- Global Broadcast (Notification Modal) -->
+            <div class="comm-section">
+              <div class="header-with-badge">
+                <span class="comm-label broadcast">Global Broadcast</span>
+              </div>
+              <textarea id="broadcastInput" class="input" rows="2"
+                placeholder="Information for notification modal..."></textarea>
+              <div class="comm-actions">
+                <button class="btn-primary btn-sm" id="btnSendBroadcast">Send Broadcast</button>
+                <button class="btn-outline btn-sm" id="btnClearBroadcast">Clear</button>
+              </div>
+              <div id="broadcastStatus" class="comm-status-preview">No active broadcast</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="admin-grid">
+
+          <!-- Steward Applications -->
+          <section class="admin-card admin-card-span">
+            <header class="admin-card-header">
+              <div>
+                <h3>Steward Applications</h3>
+                <p>Review pending requests</p>
+              </div>
+            </header>
+            <div class="table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Experience</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminApplicationsTableBody">
+                  <!-- Filled by JS -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Users Management -->
+          <section class="admin-card admin-card-span">
+            <header class="admin-card-header">
+              <div>
+                <h3>Users Management</h3>
+                <p>Investors and Farmers</p>
+              </div>
+              <button class="btn-primary btn-sm" type="button" id="addUserBtn">
+                + Add User
+              </button>
+            </header>
+            <div class="table-tools">
+              <input id="userSearch" class="input" type="search" placeholder="Search users..." autocomplete="off" />
+              <select id="userStatusFilter" class="select" aria-label="Filter users">
+                <option value="all">All statuses</option>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+              </select>
+            </div>
+            <div class="bulkbar" id="usersBulkbar" style="display: none">
+              <span id="usersSelectedCount">0 selected</span>
+              <button class="btn-outline btn-sm" type="button" id="usersClearSel">
+                Clear
+              </button>
+              <button class="btn-danger-fill btn-sm" type="button" id="usersBulkDelete">
+                Delete Selected
+              </button>
+            </div>
+            <div class="table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <input type="checkbox" id="usersSelectAll" aria-label="Select all users" />
+                    </th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pager" id="usersPager"></div>
+          </section>
+
+          <!-- Plant Management -->
+          <section class="admin-card admin-card-span">
+            <header class="admin-card-header">
+              <div>
+                <h3>Plant Management</h3>
+                <p>Add, edit and monitor your plants</p>
+              </div>
+              <button class="btn-primary btn-sm" type="button" id="addPlantBtn">
+                + Add Plant
+              </button>
+            </header>
+            <div class="table-tools">
+              <input id="plantSearch" class="input" type="search" placeholder="Search plants..." autocomplete="off" />
+              <select id="plantStatusFilter" class="select" aria-label="Filter plants">
+                <option value="all">All statuses</option>
+                <option value="healthy">Healthy</option>
+                <option value="growing">Growing</option>
+                <option value="attention">Attention</option>
+              </select>
+            </div>
+            <div class="bulkbar" id="plantsBulkbar" style="display: none">
+              <span id="plantsSelectedCount">0 selected</span>
+              <button class="btn-outline btn-sm" type="button" id="plantsClearSel">
+                Clear
+              </button>
+              <button class="btn-danger-fill btn-sm" type="button" id="plantsBulkDelete">
+                Delete Selected
+              </button>
+            </div>
+            <div class="table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <input type="checkbox" id="plantsSelectAll" aria-label="Select all plants" />
+                    </th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Height</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminPlantsTableBody">
+                  <!-- Filled by JS from plantsData -->
+                </tbody>
+              </table>
+            </div>
+            <div class="pager" id="plantsPager"></div>
+          </section>
+        </div>
+
+        <!-- Activity Log -->
+        <section class="admin-card admin-card-span">
+          <header class="admin-card-header">
+            <div>
+              <h3>System Activity Log</h3>
+              <p>Recent events and user actions</p>
+            </div>
+          </header>
+          <div id="activityLogHost" class="activity-log">
+            <p>Loading activity...</p>
+          </div>
+        </section>
+      </div>
+  </div>
+  </main>
+  </div>
+
+  <!-- Dialog -->
+  <div class="dialog" id="dialog" aria-hidden="true">
+    <div class="dialog-backdrop" data-close="true"></div>
+    <div class="dialog-card" role="dialog" aria-modal="true">
+      <div class="dialog-header">
+        <h3 id="dialogTitle">Dialog</h3>
+        <button class="btn-text" id="dialogCloseBtn" type="button">
+          Close
+        </button>
+      </div>
+      <form id="dialogForm" class="dialog-body">
+        <!-- Filled by JS -->
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div class="dialog" id="confirmDialog" aria-hidden="true">
+    <div class="dialog-backdrop" data-close="true"></div>
+    <div class="dialog-card" role="dialog" aria-modal="true">
+      <div class="dialog-header">
+        <h3 id="confirmTitle">Confirm</h3>
+      </div>
+      <div class="dialog-body">
+        <p id="confirmMessage" class="confirm-msg"></p>
+        <div class="dialog-actions">
+          <button class="btn-outline" type="button" id="confirmCancelBtn">
+            Cancel
+          </button>
+          <button class="btn-danger-fill" type="button" id="confirmOkBtn">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/auth-interceptor.js"></script>
+  <script type="module" src="js/ui.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+
+</html>

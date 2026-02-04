@@ -1,0 +1,7 @@
+node_modules
+.env
+key.txt
+BX_Database.db
+public/uploads/*
+*.log
+.DS_Store
