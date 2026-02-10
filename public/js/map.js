@@ -1,6 +1,9 @@
 import { state } from './state.js';
 import { toast } from './ui.js';
 import { loadScript, loadCSS } from './loader.js';
+import * as api from './api.js';
+
+let missionUpdateInterval = null;
 
 export function getStatusColor(status) {
     const s = (status || "").toLowerCase();
@@ -71,18 +74,19 @@ export async function loadMap() {
     const zoom = state.mapData.zoom || 15;
 
     state.mapInstance = L.map('farmMap', {
-        maxZoom: 18,
+        maxZoom: 19,
         minZoom: 5
     }).setView(center, zoom);
 
     // Define Base Layers with appropriate zoom limits
     state.baseLayers = {
         street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
+            maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
         }),
         satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 18,
+            maxZoom: 19,
+            maxNativeZoom: 18,
             attribution: '© Esri'
         })
     };
@@ -130,9 +134,15 @@ export async function loadMap() {
         toast('Shape drawn successfully!');
     });
 
-    // Check for pending focus
+    // Check for pending focus OR pending live satellite
     if (state.pendingMapFocusPlantId) {
         setTimeout(() => focusMapOnPlant(state.pendingMapFocusPlantId), 500);
+    }
+
+    const pendingLiveId = localStorage.getItem("pm_pending_live_sat_id");
+    if (pendingLiveId) {
+        localStorage.removeItem("pm_pending_live_sat_id");
+        setTimeout(() => enterSatelliteLiveMode(parseInt(pendingLiveId)), 1000);
     }
 
     isInitializing = false;
@@ -200,7 +210,8 @@ export function renderPlantMarkers() {
                 marker.bindPopup(`
                     <strong>${plant.name}</strong><br>
                     ${plant.location}<br>
-                    Status: <span style="color: ${color}; font-weight: bold;">${plant.status}</span>
+                    Status: <span style="color: ${color}; font-weight: bold;">${plant.status}</span><br>
+                    <small style="color:#666">X: ${plant.coords[0].toFixed(7)} | Y: ${plant.coords[1].toFixed(7)}</small>
                     <br><small style="color:#666">Click for Zone Analytics</small>
                 `);
 
@@ -509,8 +520,22 @@ function showDynamicZoneAnalytics(plant) {
         <span class="stat-value" style="color: ${getStatusColor(plant.status)}">${plant.status}</span>
       </div>
       <div class="stat-row">
+        <span class="stat-label">Coordinate X (Lat)</span>
+        <span class="stat-value">${plant.coords[0].toFixed(7)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Coordinate Y (Lng)</span>
+        <span class="stat-value">${plant.coords[1].toFixed(7)}</span>
+      </div>
+      <div class="stat-row">
         <span class="stat-label">Last Checked</span>
         <span class="stat-value">${formatDateTime(plant.lastWatered || plant.last_watered) || 'Recently'}</span>
+      </div>
+      
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn btn-primary btn-sm" style="width: 100%; justify-content: center; background: #6366f1;" onclick="import('./js/map.js').then(m => m.enterSatelliteLiveMode(${plant.id}))">
+          📡 LIVE SATELLITE VIEW
+        </button>
       </div>
     `;
 
@@ -539,3 +564,147 @@ function focusMapOnPlant(plantId) {
         showDynamicZoneAnalytics(plant);
     }
 }
+
+/**
+ * Restricted Satellite Live Mode 
+ * Requires Premium or Steward role
+ */
+export async function enterSatelliteLiveMode(plantId) {
+    const userRole = localStorage.getItem("pm_user_role");
+    const subTier = localStorage.getItem("pm_user_subscription") || "free";
+
+    const isPremium = subTier === 'premium' || localStorage.getItem("pm_premium_status") === 'true';
+    const isSteward = userRole === 'steward' || localStorage.getItem("pm_steward_status") === 'approved';
+
+    if (!isPremium && !isSteward) {
+        showPremiumLock();
+        return;
+    }
+
+    const plant = state.plantsData.find(p => p.id === plantId);
+    if (!plant || !state.mapInstance) return;
+
+    // 1. Switch to Satellite and fly to high zoom
+    switchMapLayer('satellite');
+    state.mapInstance.flyTo(plant.coords, 19, {
+        animate: true,
+        duration: 1.5
+    });
+
+    // 2. Setup/Show Overlay
+    const mapContainer = document.getElementById("farmMap");
+    mapContainer.classList.add("live-video-feed"); // For CSS effects
+
+    let overlay = document.getElementById("satLiveOverlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "satLiveOverlay";
+        overlay.className = "satellite-live-overlay";
+        mapContainer.appendChild(overlay);
+    }
+
+    // Initial Weather Fetch for Precise Location
+    let weatherInfo = "FETCHING MISSION DATA...";
+    let sunInfo = "SR: --:-- | SS: --:--";
+    let isDay = true; // Default to day
+
+    api.fetchWeather(plant.coords[0], plant.coords[1]).then(data => {
+        if (data && data.current) {
+            const { temperature_2m, relative_humidity_2m, wind_speed_10m, is_day } = data.current;
+            weatherInfo = `${temperature_2m}°C | RH:${relative_humidity_2m}% | W:${wind_speed_10m}km/h`;
+            isDay = is_day === 1;
+
+            // Apply day/night filter
+            if (!isDay) {
+                mapContainer.classList.add("night-mode");
+            } else {
+                mapContainer.classList.remove("night-mode");
+            }
+
+            if (data.daily) {
+                const sr = data.daily.sunrise[0].split('T')[1];
+                const ss = data.daily.sunset[0].split('T')[1];
+                sunInfo = `SR: ${sr} | SS: ${ss}`;
+            }
+            updateTelemetry();
+        }
+    });
+
+    // Mission Update Interval (Real-time Clock & Telemetry)
+    if (missionUpdateInterval) clearInterval(missionUpdateInterval);
+
+    let scanProgress = 0;
+    const updateTelemetry = () => {
+        const now = new Date();
+        const lTime = now.toLocaleTimeString();
+        const uTime = now.toISOString().split('T')[1].split('.')[0] + 'Z';
+
+        // Progress simulation
+        if (scanProgress < 100) scanProgress += Math.random() * 5;
+        const progressStr = scanProgress >= 100 ? "COMPLETE" : `${Math.floor(scanProgress)}%`;
+        const healthIdx = scanProgress >= 100 ? (plant.health_index || "85") : "ANALYZING...";
+
+        overlay.innerHTML = `
+            <div class="sat-grid"></div>
+            <div class="scanning-beam"></div>
+            <div class="sat-ui-panel sat-ui-top-left">
+                <div class="sat-status-dot active"></div>
+                LIVE VIDEO FEED // ORBIT_LINK_7<br>
+                SUBJECT: ${plant.name.toUpperCase()} (ID_${plant.id})<br>
+                L-TIME: ${lTime}<br>
+                U-TIME: ${uTime}
+            </div>
+            <div class="sat-ui-panel sat-ui-top-right">
+                LAT: ${plant.coords[0].toFixed(7)}<br>
+                LNG: ${plant.coords[1].toFixed(7)}<br>
+                ENV: ${weatherInfo}<br>
+                SOL: ${sunInfo}
+            </div>
+            <div class="sat-ui-panel sat-ui-bottom-left">
+                SCANNING TISSUE... ${progressStr}<br>
+                HEALTH_IDX: ${healthIdx} (${plant.status.toUpperCase()})<br>
+                EST_ACCURACY: 99.8% (RTK-LVL)
+            </div>
+            <div class="sat-ui-panel sat-ui-bottom-right">
+                <button id="exitSatBtn" style="pointer-events: auto; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px; cursor: pointer; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">EXIT</button>
+            </div>
+        `;
+
+        document.getElementById("exitSatBtn").onclick = () => {
+            clearInterval(missionUpdateInterval);
+            mapContainer.classList.remove("live-video-feed");
+            mapContainer.classList.remove("night-mode");
+            overlay.classList.remove("active");
+            state.mapInstance.setZoom(17);
+            toast("Deep Link Terminated");
+        };
+    };
+
+    updateTelemetry();
+    missionUpdateInterval = setInterval(updateTelemetry, 1000);
+
+    overlay.classList.add("active");
+    toast("Establishing Real-time Satellite Link...");
+}
+
+function showPremiumLock() {
+    const mapContainer = document.getElementById("farmMap");
+    let lock = document.getElementById("premLockOverlay");
+
+    if (!lock) {
+        lock = document.createElement("div");
+        lock.id = "premLockOverlay";
+        lock.className = "premium-lock-overlay";
+        lock.innerHTML = `
+            <div class="lock-icon-lg">💎</div>
+            <h2>Premium Satellite View</h2>
+            <p>Access high-resolution live satellite imagery and advanced plant scanning. Available exclusively for Stewards and Premium members.</p>
+            <div style="display: flex; gap: 12px; pointer-events: auto;">
+                <button class="btn btn-primary" onclick="localStorage.setItem('pm_currentPage', 'subscription'); window.location.reload();">UPGRADE NOW</button>
+                <button class="btn btn-outline" style="color: white; border-color: white;" onclick="this.parentElement.parentElement.remove()">CLOSE</button>
+            </div>
+        `;
+        mapContainer.appendChild(lock);
+    }
+}
+

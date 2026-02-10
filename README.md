@@ -1,121 +1,95 @@
 # JuantreePH - Comprehensive Plant & Agarwood Management Platform
 
-**JuantreePH** (also branded as **AgarwoodTrackerPH**) is a full-stack web application designed for **agricultural monitoring, plant management, and community-driven knowledge sharing**, with a specific focus on **Philippine flora, agarwood cultivation, and sustainable forestry practices**.
+**JuantreePH** (also branded as **AgarwoodTrackerPH**) is a premium full-stack platform designed for high-precision agricultural monitoring, AI-driven plant diagnostics, and community-driven knowledge sharing. It specifically focuses on Philippine flora, agarwood cultivation, and sustainable forestry management.
 
-## Core Features
+## 🚀 Core Features
 
-### 🌱 Plant Management & Monitoring
-- **Real-time Plant Tracking**: Monitor individual plants with detailed profiles including location, height, health status, and growth metrics
-- **Satellite View & Live Telemetry**: Visualize plant locations with precise GPS coordinates and real-time environmental data (weather, sunrise/sunset times)
-- **Task & Routine Management**: Create and track care schedules, automated routine generation, and progress tracking for plant maintenance
+### 🌱 Advanced Plant Monitoring
+- **Precision Tracking**: Monitor growth metrics, health status, and maintenance history for individual plants.
+- **Geotagged Visualization**: Interactive farm map with satellite view, clustering, and precise GPS positioning.
+- **Dynamic Field Telemetry**: Live environmental data including local weather, sunlight periods, and RTK-level accuracy estimations.
 
 ### 🤖 AI-Powered Plant Doctor
-- **Image-Based Disease Diagnosis**: Upload plant photos for instant AI analysis and health assessment
-- **Deep Scan Technology**: Advanced multi-disease detection capable of identifying even minor spots and molds
-- **AI Usage Quotas**: Role-based limits (Free, Steward, Premium tiers) for sustainable AI resource management
+- **Instant Diagnosis**: Upload high-resolution photos for immediate AI-driven health assessments.
+- **Deep Scan Technology**: Advanced multi-disease detection capable of identifying microscopic spots, molds, and nutrient deficiencies.
+- **Resource Management**: Role-based AI usage quotas (Free, Steward, and Premium tiers) ensuring sustainable service delivery.
 
-### 📚 Knowledge Hub & Education
-Educational content library covering:
-- Regenerative Agriculture
-- Agroforestry Design
-- Heritage & Native Seeds
-- Plant Physiology 101
-- The Future of Food Systems
+### 📚 Knowledge & Heritage Hub
+- **Educational Library**: Deep dives into Regenerative Agriculture, Agroforestry Design, and Plant Physiology.
+- **Flora Filipiana**: A curated digital herbarium of Philippine endemic species, including agarwood varieties and endemic timber.
+- **Interactive Carousels**: Visual exploration of endemic trees and sustainable forestry practices.
 
-### 🇵🇭 Flora Filipiana Collection
-Curated database of Philippine endemic species including:
-- Agarwood varieties
-- Endemic trees
-- Sustainable timber species
-- Native plant documentation with images and detailed information
+### 👥 Stewardship & Community
+- **Multi-Role Ecosystem**: Tailored experiences for Free Users, Professional Stewards, and Administrators.
+- **Stewardship's Grove**: A dedicated workspace for professional caretakers to manage client portfolios, routines, and tasks.
+- **Automated Routines**: Intelligent generation of care schedules based on plant species and environmental factors.
 
-### 👥 Multi-Role User System
-- **Free Users**: Basic access to plant tracking and limited AI features
-- **Stewards**: Community leaders with enhanced privileges (10 weekly image analyses, 5 deep scans)
-- **Premium Users**: Full access to all platform features
-- **Administrators**: Complete system control, user management, and steward application review
+### 💬 Integrated Communication
+- **Real-Time Messaging**: Direct communication between owners and professional stewards.
+- **Global Alert System**: System-wide notifications and administrative broadcasts for critical updates.
+- **Activity Logging**: Comprehensive audit trails for plant maintenance and user engagement.
 
-### 💬 Communication & Collaboration
-- Real-time messaging system between users
-- System-wide alerts and broadcast notifications
-- Admin panel for communications management
-- Activity logging and user engagement tracking
+## 🛠️ Technology Stack
 
-### ⚙️ Technical Infrastructure
-- **Backend**: Node.js/Express with MySQL database
-- **Real-time Features**: Socket.IO for live updates and notifications
-- **Authentication**: JWT-based secure authentication with bcrypt password hashing
-- **Progressive Web App**: Service worker implementation for offline caching
-- **File Management**: Multer-based image upload system with validation
+- **Backend**: Node.js & Express 5 (Modular Route Architecture)
+- **Database**: MySQL 2 with advanced connection pooling
+- **Real-time**: Socket.IO for live telemetry and instant notifications
+- **Security**: JWT-based authentication, bcrypt hashing, and Zod schema validation
+- **Frontend**: Vanilla JavaScript (ES6+), Modern CSS (Flexbox/Grid), and modular component design
+- **Performance**: Service Worker implementation for offline resilience and asset caching
 
-## Target Users
+## 📂 Project Structure
 
-- **Agarwood Farmers & Investors**: Track cultivation investments and monitor growth
-- **Agricultural Stewards**: Community knowledge-keepers and mentors
-- **Sustainability Advocates**: Users interested in Philippine native flora and sustainable practices
-- **Researchers & Educators**: Access to comprehensive plant databases and educational resources
-
-## Technology Stack
-
-- **Backend**: Node.js, Express 5, MySQL 2, Socket.IO
-- **Security**: JWT, bcrypt, Zod validation
-- **Database**: MySQL with connection pooling
-- **File Handling**: Multer for multipart form uploads
-- **Frontend**: Vanilla JavaScript, responsive CSS, modular component architecture
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v14 or higher)
-- MySQL (v8 or higher)
-- npm or yarn package manager
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/JuantreePH.git
-cd JuantreePH
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure database connection:
-   - Create a `.env` file with your database credentials:
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=bx_database
-```
-
-4. Start the server:
-```bash
-npm start
-```
-
-5. Access the application at `http://localhost:3000`
-
-## Project Structure
 ```
 JuantreePH/
-├── public/           # Frontend files (HTML, CSS, JS)
-├── src/
-│   ├── ai/          # AI logic for plant diagnosis
-│   ├── config/      # Database configuration
-│   ├── routes/      # API route handlers
-│   └── helpers/     # Utility functions
-├── scripts/         # Maintenance and utility scripts
-└── server.js        # Main application entry point
+├── public/                 # Frontend assets (HTML, CSS, JS)
+│   ├── css/               # Modular styling system
+│   ├── js/                # Component logic and API integration
+│   └── ...
+├── src/                    # Backend source code
+│   ├── ai/                # AI diagnostic logic
+│   ├── config/            # Database and system configuration
+│   ├── helpers/           # Shared utility functions
+│   ├── middleware/        # Auth and validation middleware
+│   ├── routes/            # Modular API endpoint handlers
+│   └── validation/        # Zod request validation schemas
+├── scripts/               # Maintenance and data utility scripts
+└── server.js              # Application entry point & DB initialization
 ```
 
-## Contributing
+## 🚥 Getting Started
 
-This platform combines **agricultural technology, AI diagnostics, community building, and education** to create a comprehensive ecosystem for sustainable plant management in the Philippines.
+### Prerequisites
+- Node.js (v18 or higher)
+- MySQL 8.0+
+- npm
 
-## License
+### Installation & Setup
 
-This project is developed for educational and agricultural advancement purposes.
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/yourusername/JuantreePH.git
+   cd JuantreePH
+   npm install
+   ```
+
+2. **Environment Configuration**:
+   Create a `.env` file in the root directory:
+   ```env
+   DB_HOST=your_host
+   DB_USER=your_user
+   DB_PASSWORD=your_password
+   DB_NAME=juantree_db
+   JWT_SECRET=your_secure_secret
+   ADMIN_EMAIL=admin@example.com
+   ```
+
+3. **Launch**:
+   ```bash
+   npm start
+   ```
+   The application will be available at `http://localhost:3000`.
+
+## 📜 License & Purpose
+
+Developed for agricultural advancement and educational research in the Philippines. All rights reserved.

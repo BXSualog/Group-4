@@ -49,14 +49,14 @@ export async function fetchContacts() {
     }
 }
 
-export async function fetchWeather() {
+export async function fetchWeather(latOverride = null, lonOverride = null) {
     // Return data for the UI to interpret, or store in state
     try {
-        let lat = 10.7202; // Default: Iloilo
-        let lon = 122.5621;
+        let lat = latOverride || 10.7202; // Default: Iloilo
+        let lon = lonOverride || 122.5621;
 
-        // Try to get user location
-        if (navigator.geolocation) {
+        // Try to get user location if no override provided
+        if (!latOverride && navigator.geolocation) {
             const pos = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
             }).catch(() => null);
@@ -100,93 +100,6 @@ export async function fetchFinancials() {
     // No fetch in loadFinancials.
 }
 
-export async function fetchCommunityFeed() {
-    const email = localStorage.getItem("pm_user_email");
-    const url = new URL(`${API_BASE_URL}/api/community/posts`);
-    url.searchParams.append('email', email);
-    if (state.communitySearchQuery) url.searchParams.append('search', state.communitySearchQuery);
-    if (state.communityFilter !== 'All') url.searchParams.append('type', state.communityFilter);
-    url.searchParams.append('sort', state.communitySort);
-
-    try {
-        const res = await fetch(url);
-        if (res.ok) {
-            state.communityData = await res.json();
-        } else {
-            state.communityData = [];
-        }
-    } catch (err) {
-        console.error("Feed error", err);
-        state.communityData = [];
-    }
-}
-
-export async function fetchTopContributors() {
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/community/top-contributors`);
-        if (res.ok) return await res.json();
-        return [];
-    } catch (e) {
-        console.error("Top contributors error", e);
-        return [];
-    }
-}
-
-export async function submitCommunityPost(formData) {
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/community/posts`, {
-            method: 'POST',
-            body: formData
-        });
-        return res.ok;
-    } catch (e) {
-        console.error("Post error", e);
-        return false;
-    }
-}
-
-export async function likePost(id) {
-    const email = localStorage.getItem("pm_user_email");
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/community/posts/${id}/like`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email })
-        });
-        if (res.ok) return await res.json();
-        return null;
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
-}
-
-export async function fetchComments(postId) {
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/community/posts/${postId}/comments`);
-        if (res.ok) return await res.json();
-        return [];
-    } catch (e) {
-        console.error(e);
-        return [];
-    }
-}
-
-export async function submitComment(postId, content, authorInfo) {
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/community/posts/${postId}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...authorInfo,
-                content: content
-            })
-        });
-        return res.ok;
-    } catch (e) {
-        return false;
-    }
-}
 
 export async function fetchNotifications() {
     const email = localStorage.getItem("pm_user_email");
@@ -389,43 +302,6 @@ export async function requestConnection(stewardEmail) {
     }
 }
 
-// Plant Doctor
-export async function diagnosePlant(formData) {
-    try {
-        const resp = await fetch(`${API_BASE_URL}/api/doctor/diagnose`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem("pm_token")}`
-            },
-            body: formData
-        });
-        if (resp.ok) return await resp.json();
-
-        try {
-            const errorData = await resp.json();
-            console.error("Diagnosis API Error:", errorData);
-            return { error: errorData.error || "Server Error", details: errorData.details };
-        } catch (e) {
-            console.error("Diagnosis API Error (status):", resp.status);
-            return { error: "Diagnosis Failed", status: resp.status };
-        }
-    } catch (err) {
-        console.error("Diagnosis error:", err);
-        return { error: "Network Error", details: err.message };
-    }
-}
-
-export async function fetchDiagnoses() {
-    const email = localStorage.getItem("pm_user_email");
-    try {
-        const resp = await fetch(`${API_BASE_URL}/api/doctor/diagnoses?email=${encodeURIComponent(email)}`);
-        if (resp.ok) return await resp.json();
-        return [];
-    } catch (err) {
-        console.error("Fetch diagnoses error:", err);
-        return [];
-    }
-}
 
 export async function fetchBroadcast() {
     try {
@@ -453,30 +329,4 @@ export async function deleteAccount() {
     }
 }
 
-export async function upgradeTier(tier, cycle) {
-    try {
-        const resp = await fetch(`${API_BASE_URL}/api/account/upgrade`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tier, cycle })
-        });
-        return await resp.json();
-    } catch (e) {
-        return { error: 'Upgrade failed' };
-    }
-}
 
-export async function fetchQuotas() {
-    try {
-        const resp = await fetch(`${API_BASE_URL}/api/doctor/quotas`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem("pm_token")}`
-            }
-        });
-        if (resp.ok) return await resp.json();
-        return null;
-    } catch (err) {
-        console.error("Fetch quotas error:", err);
-        return null;
-    }
-}

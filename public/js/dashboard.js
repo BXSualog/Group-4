@@ -2,9 +2,7 @@ import { state } from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
 import * as map from './map.js';
-import * as community from './community.js';
 import * as chat from './chat.js';
-import * as doctor from './doctor.js';
 import { initSocket } from './socket.js';
 
 // --- DASHBOARD INITIALIZATION ---
@@ -33,9 +31,7 @@ async function initializeApp() {
 
   // Initialize Modules
   // map.loadMap(); // Lazy loaded now
-  community.setupCommunityEvents();
   chat.setupChatEvents();
-  doctor.setupDoctorUI();
 
   ui.renderSkeleton("plantsSkeleton", 6);
 
@@ -43,9 +39,6 @@ async function initializeApp() {
     // Non-blocking fetches
     api.fetchContacts().then(() => ui.renderContactsUI());
     api.fetchWeather().then(data => ui.renderWeather(data));
-    api.fetchTasks().then(() => ui.renderTasks());
-    api.fetchFinancials().then(() => ui.renderFinancials());
-    // Community feed is fetched in setupCommunityEvents
 
     // This is the only critical blocking call
     await api.fetchPlants();
@@ -65,14 +58,11 @@ async function initializeApp() {
       ui.updateNavProfile(profile);
       if (profile.role) {
         localStorage.setItem("pm_user_role", profile.role);
-        if (profile.role === 'admin' && !window.location.href.includes("admin.html")) {
-          window.location.href = "admin.html";
-          return;
-        }
       }
       if (profile.avatar) localStorage.setItem("pm_user_avatar", profile.avatar);
       if (profile.username) localStorage.setItem("pm_user_name", profile.username);
       if (profile.steward_status) localStorage.setItem("pm_steward_status", profile.steward_status);
+      if (profile.is_steward !== undefined) localStorage.setItem("pm_is_steward", profile.is_steward ? "1" : "0");
 
       // Apply User Theme
       if (profile.theme) {
@@ -96,11 +86,6 @@ async function initializeApp() {
       }
     }
 
-    // Set Create Post Avatar
-    const postAvatar = document.getElementById("postUserAvatar");
-    if (postAvatar) {
-      postAvatar.textContent = localStorage.getItem("pm_user_avatar") || "👤";
-    }
 
     // Handle URL Parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -109,43 +94,50 @@ async function initializeApp() {
 
     if (pageParam) {
       navigateToPage(pageParam);
-      if (pageParam === "messages" && contactParam) {
-        setTimeout(() => {
-          const contactEmail = decodeURIComponent(contactParam);
-          const contact = (state.contactsData || []).find(c => c.email === contactEmail);
-          if (contact) {
-            state.selectedContact = contact;
-            chat.selectContact(contact.id);
-          }
-        }, 500);
+    } else {
+      const storedPage = localStorage.getItem("pm_currentPage");
+      if (storedPage) {
+        navigateToPage(storedPage);
+        localStorage.removeItem("pm_currentPage");
       }
     }
-
-    // Initialize Real-time Socket
-    initSocket(email, {
-      onMessage: (msg) => chat.handleIncomingMessage(msg),
-      onNotification: (notif) => {
-        ui.toast(`New notification: ${notif.message}`);
-        loadAndRenderNotifications();
-      }
-    });
-
-    loadAndRenderNotifications();
+    if (pageParam === "messages" && contactParam) {
+      setTimeout(() => {
+        const contactEmail = decodeURIComponent(contactParam);
+        const contact = (state.contactsData || []).find(c => c.email === contactEmail);
+        if (contact) {
+          state.selectedContact = contact;
+          chat.selectContact(contact.id);
+        }
+      }, 500);
+    }
   }
 
-  // Unregister any existing Service Workers
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let registration of registrations) {
-        registration.unregister().then(() => console.log('[Service Worker] Unregistered existing SW'));
-      }
-    });
-  }
+  // Initialize Real-time Socket
+  initSocket(email, {
+    onMessage: (msg) => chat.handleIncomingMessage(msg),
+    onNotification: (notif) => {
+      ui.toast(`New notification: ${notif.message}`);
+      loadAndRenderNotifications();
+    }
+  });
 
-  // System Communications
-  ui.initSystemCommunications();
-  setInterval(() => ui.initSystemCommunications(), 60000);
+  loadAndRenderNotifications();
 }
+
+// Unregister any existing Service Workers
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let registration of registrations) {
+      registration.unregister().then(() => console.log('[Service Worker] Unregistered existing SW'));
+    }
+  });
+}
+
+// System Communications
+ui.initSystemCommunications();
+setInterval(() => ui.initSystemCommunications(), 60000);
+
 
 async function loadAndRenderNotifications() {
   const notifs = await api.fetchNotifications();
@@ -209,36 +201,12 @@ function setupEventListeners() {
     state.pendingMapFocusPlantId = plantId;
   });
 
-  document.addEventListener('mark-inspected', (e) => {
-    ui.toast("Marked as inspected");
-  });
-
-  document.addEventListener('request-update', async (e) => {
-    const plant = e.detail;
-    const btn = document.getElementById("requestUpdate");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Requesting...";
-    }
-
-    const success = await api.sendUpdateRequest(plant.id, localStorage.getItem("pm_user_email"), localStorage.getItem("pm_user_name"));
-
-    if (success) {
-      ui.toast("Update request sent to steward!");
-      if (btn) btn.textContent = "Request Sent";
-    } else {
-      ui.toast("Failed to send request.");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Request Update";
-      }
-    }
-  });
-
-  // Other listeners
   document.getElementById("btnStewardship")?.addEventListener("click", () => {
     const status = localStorage.getItem("pm_steward_status") || "none";
-    if (localStorage.getItem("pm_user_role") === 'steward' || status === 'approved') {
+    const role = localStorage.getItem("pm_user_role");
+    const isSteward = localStorage.getItem("pm_is_steward") === "1" || localStorage.getItem("pm_is_steward") === "true";
+
+    if (role === 'steward' || status === 'approved' || isSteward) {
       window.location.href = "steward.html";
     } else if (status === 'pending') {
       ui.alert("Application Pending", "Your stewardship application is currently under review.");
@@ -246,6 +214,7 @@ function setupEventListeners() {
       window.location.href = "steward-application.html";
     }
   });
+
   document.getElementById("btnLogout")?.addEventListener("click", (e) => {
     e.preventDefault();
     handleLogout();
@@ -349,13 +318,8 @@ function navigateToPage(page) {
     dashboard: "dashboardContent",
     plants: "plantsContent",
     messages: "messagesContent",
-    tasks: "tasksContent",
-    financials: "financialsContent",
     map: "mapContent",
-    doctor: "doctorContent",
-    community: "communityContent",
     stewards: "stewardsContent",
-    subscription: "subscriptionContent",
   };
 
   const sectionId = sectionMap[page];
@@ -383,10 +347,6 @@ function navigateToPage(page) {
 
   if (page === 'stewards') {
     api.fetchAvailableStewards().then(() => ui.renderStewards());
-  }
-
-  if (page === 'subscription') {
-    ui.renderSubscriptionPage();
   }
 }
 
@@ -419,12 +379,8 @@ function debounce(func, wait) {
 }
 
 // Global Bridges
-window.handleNotifClick = async function (postId) {
-  if (postId) {
-    navigateToPage('community');
-  }
-  await api.markNotificationRead();
-  loadAndRenderNotifications();
+window.handleNotifClick = async function (type) {
+  // Generic handler if needed
 };
 
 window.dismissNotification = async function (id, element) {
@@ -449,12 +405,7 @@ window.dismissNotification = async function (id, element) {
 };
 
 window.toggleTask = function (id) {
-  const task = state.tasksData.find(t => t.id === id);
-  if (task) {
-    task.status = task.status === 'completed' ? 'pending' : 'completed';
-    ui.renderTasks();
-    if (task.status === 'completed') ui.toast("Task completed!");
-  }
+  // Tasks removed
 };
 
 // Initial Call

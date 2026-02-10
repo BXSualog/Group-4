@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Admin Guard (Nuclear Mode)
   const userRole = localStorage.getItem("pm_user_role");
   const userEmail = localStorage.getItem("pm_user_email");
-  const isAdmin = userRole === 'admin' || userEmail === 'brynnsualog@gmail.com';
+  const isAdmin = userRole === 'admin';
 
   if (!isAdmin) {
     console.warn("Unauthorized access attempt to admin page.");

@@ -127,7 +127,7 @@ function handleLogin() {
 
         console.log(`Login successful for ${lowerEmail}. Role reported: ${role}`);
 
-        if (role === 'admin' || lowerEmail === 'brynnsualog@gmail.com') {
+        if (role === 'admin') {
           console.log("AUTHORIZED ADMIN: Redirecting to Admin Panel...");
           window.location.href = "admin.html";
         } else {
@@ -211,15 +211,26 @@ function handleRegister() {
   registerBtn.textContent = "Creating Account...";
   registerBtn.disabled = true;
 
-  fetch(`${API_BASE_URL}/api/register`, {
+  // Debug logging
+  console.log('[REGISTER] API_BASE_URL:', window.API_BASE_URL);
+  console.log('[REGISTER] Payload:', { email, password: '***' });
+
+  const apiUrl = window.API_BASE_URL || 'http://localhost:3001';
+
+  fetch(`${apiUrl}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   })
-    .then(response => response.json())
+    .then(response => {
+      console.log('[REGISTER] Response status:', response.status);
+      return response.json();
+    })
     .then(data => {
       registerBtn.textContent = originalText;
       registerBtn.disabled = false;
+
+      console.log('[REGISTER] Response data:', data);
 
       if (data.error) {
         showError(data.error);
@@ -239,8 +250,8 @@ function handleRegister() {
     .catch(error => {
       registerBtn.textContent = originalText;
       registerBtn.disabled = false;
+      console.error('[REGISTER] Error:', error);
       showError("Server error. Please try again later.");
-      console.error('Error:', error);
     });
 }
 

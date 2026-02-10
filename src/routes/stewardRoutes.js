@@ -285,7 +285,7 @@ router.get('/stewards/available', verifyToken, async (req, res) => {
             SELECT u.username, u.email, u.avatar, u.role, u.bio, c.status as connection_status
             FROM users u
             LEFT JOIN connections c ON (c.steward_email = u.email AND c.user_email = ?)
-            WHERE u.is_steward = 1
+            WHERE u.is_steward = 1 AND u.role != 'admin'
         `, [email]);
         res.status(200).json(rows);
     } catch (err) {

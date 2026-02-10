@@ -18,7 +18,8 @@ router.post('/register', validate(registerSchema), async (req, res) => {
         const { email, password } = req.body;
         const hashed = await bcrypt.hash(password, 10);
 
-        await db.run(`INSERT INTO users(email, password) VALUES(?, ?)`, [email, hashed]);
+        // Insert with NULL username - user will complete profile during onboarding
+        await db.run(`INSERT INTO users(email, password, username) VALUES(?, ?, NULL)`, [email, hashed]);
 
         // Generate token for auto-login after registration
         const token = generateToken({ email, role: 'user', is_steward: 0 });

@@ -33,12 +33,11 @@ router.get('/plants/:id', verifyToken, async (req, res) => {
         if (!plant) return res.status(404).json({ error: 'Plant not found' });
 
         const timeline = await db.all(`SELECT * FROM plant_timeline WHERE plant_id = ? ORDER BY created_at DESC`, [id]);
-        const images = await db.all(`SELECT * FROM plant_images WHERE plant_id = ? ORDER BY created_at DESC`, [id]);
 
         res.status(200).json({
             ...plant,
             timeline: timeline || [],
-            images: images || []
+            images: []
         });
     } catch (err) {
         console.error("[API] Plant Details Error:", err);
@@ -87,32 +86,6 @@ router.post('/plants/update-details', verifyToken, validate(updatePlantSchema), 
         res.status(200).json({ message: 'Plant details updated' });
     } catch (err) {
         console.error("[API] Update Plant Details Error:", err);
-        res.status(500).json({ error: 'Database error' });
-    }
-});
-
-// Diagnoses (Protected)
-router.get('/diagnoses', verifyToken, async (req, res) => {
-    try {
-        const email = req.query.email || req.user.email;
-        const rows = await db.all(`SELECT * FROM diagnoses WHERE user_email = ? ORDER BY created_at DESC LIMIT 50`, [email]);
-        res.status(200).json(rows);
-    } catch (err) {
-        console.error("[API] Get Diagnoses Error:", err);
-        res.status(500).json({ error: 'Database error' });
-    }
-});
-
-router.post('/diagnoses', verifyToken, async (req, res) => {
-    try {
-        const { user_email, plant_id, title, severity, status, date } = req.body;
-        if (!user_email || !title) return res.status(400).json({ error: 'User email and title required' });
-
-        const sql = `INSERT INTO diagnoses(user_email, plant_id, title, severity, status, date) VALUES(?, ?, ?, ?, ?, ?)`;
-        const result = await db.run(sql, [user_email, plant_id, title, severity, status, date]);
-        res.status(201).json({ id: result.lastID, message: 'Diagnosis saved' });
-    } catch (err) {
-        console.error("[API] Save Diagnosis Error:", err);
         res.status(500).json({ error: 'Database error' });
     }
 });

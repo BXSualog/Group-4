@@ -14,7 +14,6 @@
     rel="stylesheet">
 
   <link rel="stylesheet" href="css/dashboard.css" />
-  <link rel="stylesheet" href="css/subscription.css" />
   <!-- Leaflet libraries will be loaded dynamically by map.js -->
 </head>
 
@@ -43,7 +42,7 @@
   <nav class="top-nav">
     <div class="logo">
       <span class="logo-icon">🌱</span>
-      <span class="logo-text">JuanTreePH</span>
+      <span class="logo-text">AgarwoodTrackerPH</span>
     </div>
     <div class="mobile-menu-btn" id="mobileMenuBtn">
       <span></span>
@@ -61,11 +60,6 @@
           <p class="dropdown-label" id="dropdownRoleLabel">Account Menu</p>
         </div>
         <div class="dropdown-items">
-          <button class="dropdown-item" id="btnAdminPanel"
-            style="display: none; background: #eafaf1; color: #27ae60; border: 1px solid #27ae60;">
-            <span class="item-icon">🛠</span>
-            <span>Admin Panel</span>
-          </button>
           <button class="dropdown-item" id="btnStewardship">
             <span class="item-icon">🌳</span>
             <span>Stewardship's Grove</span>
@@ -75,10 +69,6 @@
             <span>Notifications</span>
             <span id="notifBadge" class="notification-badge-dot" style="display: none;"></span>
           </button>
-          <a href="settings.html" class="dropdown-item" id="btnSettings">
-            <span class="item-icon">⚙️</span>
-            <span>Settings</span>
-          </a>
           <div class="dropdown-divider"></div>
           <button class="dropdown-item logout" id="btnLogout">
             <span class="item-icon">🚪</span>
@@ -112,12 +102,6 @@
           </a>
         </li>
         <li>
-          <a href="#" class="menu-item" data-page="doctor">
-            <span class="icon">🩺</span>
-            <span class="menu-text">Plant Doctor</span>
-          </a>
-        </li>
-        <li>
           <a href="#" class="menu-item" data-page="messages">
             <span class="icon">💬</span>
             <span class="menu-text">Messages</span>
@@ -129,20 +113,6 @@
             <span class="menu-text">Stewards</span>
           </a>
         </li>
-
-        <li>
-          <a href="#" class="menu-item" data-page="community">
-            <span class="icon">👥</span>
-            <span class="menu-text">Community</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="menu-item" data-page="subscription">
-            <span class="icon">👑</span>
-            <span class="menu-text">Subscription</span>
-          </a>
-        </li>
-
       </ul>
     </aside>
 
@@ -172,17 +142,6 @@
         <div id="stewardsList" class="stewards-grid">
           <!-- Loaded by JS -->
           <div class="empty-state">Loading stewards...</div>
-        </div>
-      </div>
-
-      <!-- Subscription Content -->
-      <div id="subscriptionContent" class="content-section">
-        <div class="page-header">
-          <h2>Subscription & Plan</h2>
-          <p>Manage your account tier and AI usage</p>
-        </div>
-        <div id="subscriptionDetails">
-          <!-- Loaded by UI.js -->
         </div>
       </div>
 
@@ -222,93 +181,8 @@
           </div>
         </div>
 
-
-
         <h3 class="section-title">Recent Plants</h3>
         <div class="plants-grid" id="plantsGrid"></div>
-      </div>
-
-      <!-- Community Content -->
-      <div id="communityContent" class="content-section">
-        <div class="page-header">
-          <h2>Community Hub</h2>
-          <p>Connect, share tips, and grow together</p>
-        </div>
-
-        <div class="community-layout">
-          <div class="feed-section">
-            <div class="create-post-card">
-              <div class="post-user-info">
-                <div class="user-avatar mini" id="postUserAvatar">👤</div>
-                <textarea id="communityPostInput" class="post-input" rows="1"
-                  placeholder="Share something with the community..."></textarea>
-              </div>
-
-              <div id="mediaPreviewContainer" class="media-preview-container" style="display: none;">
-                <!-- Preview will be injected here -->
-                <button id="removeMediaBtn" class="remove-media-btn">&times;</button>
-              </div>
-
-              <div class="post-actions-bar">
-                <div class="post-essentials">
-                  <button class="icon-btn" id="btnUploadMedia" title="Upload Photo or Video">🖼️</button>
-                  <input type="file" id="communityMediaInput" accept="image/*,video/*" style="display: none;">
-                  <div class="post-tags">
-                    <button class="tag-btn active" data-post-type="Tips">Tips</button>
-                    <button class="tag-btn" data-post-type="Questions">Question</button>
-                    <button class="tag-btn" data-post-type="Showcase">Showcase</button>
-                  </div>
-                </div>
-                <button id="communityPostBtn" class="btn btn-primary">Post</button>
-              </div>
-            </div>
-
-            <div class="feed-header-actions">
-              <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="communitySearchInput" placeholder="Search posts...">
-              </div>
-              <div class="feed-filters">
-                <button class="feed-filter active" data-feed-filter="All">All</button>
-                <button class="feed-filter" data-feed-filter="Tips">Tips</button>
-                <button class="feed-filter" data-feed-filter="Questions">Questions</button>
-                <button class="feed-filter" data-feed-filter="Showcase">Showcase</button>
-              </div>
-              <select id="communitySortSelect" class="sort-select">
-                <option value="Newest">Newest</option>
-                <option value="Popular">Popular</option>
-              </select>
-            </div>
-
-            <div id="communityFeed" class="community-feed">
-              <!-- Injected by JS -->
-            </div>
-          </div>
-
-          <div class="community-sidebar">
-            <div class="comm-card">
-              <h3>Trending Topics</h3>
-              <ul class="trend-list">
-                <li>#OrganicFarming</li>
-                <li>#PestControl</li>
-                <li>#Hydroponics</li>
-                <li>#UrbanGardening</li>
-              </ul>
-            </div>
-            <div class="comm-card">
-              <h3>Top Contributors</h3>
-              <div class="contributor-row">
-                <span>🥇</span> <span>Maria Santos</span>
-              </div>
-              <div class="contributor-row">
-                <span>🥈</span> <span>Elena Reyes</span>
-              </div>
-              <div class="contributor-row">
-                <span>🥉</span> <span>Juan Dela Cruz</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- My Plants Content -->
@@ -351,60 +225,6 @@
         </div>
         <div id="plantsSkeleton" class="skeleton-grid" aria-hidden="true"></div>
         <div class="plants-grid" id="allPlantsGrid"></div>
-      </div>
-
-      <!-- TASKS Content -->
-      <div id="tasksContent" class="content-section">
-        <div class="page-header">
-          <h2>Care Tasks</h2>
-          <p>Manage daily farm operations and schedules</p>
-        </div>
-        <div class="tasks-layout">
-          <div class="tasks-list-panel">
-            <h3>To-Do List</h3>
-            <div id="todoList" class="todo-list"></div>
-          </div>
-          <div class="tasks-calendar-panel">
-            <h3>Schedule</h3>
-            <div id="miniCalendar" class="mini-calendar"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Financials Content -->
-      <div id="financialsContent" class="content-section">
-        <div class="page-header">
-          <h2>Financial Analytics</h2>
-          <p>Track ROI and Yield Forecasts</p>
-        </div>
-        <div class="financials-grid">
-          <div class="fin-card highlight">
-            <h3>Current Valuation</h3>
-            <div class="fin-value" id="finCurrentVal">$0</div>
-            <div class="fin-change">+12% vs last month</div>
-          </div>
-          <div class="fin-card">
-            <h3>Total Investment</h3>
-            <div class="fin-value" id="finTotalInv">$0</div>
-          </div>
-          <div class="fin-card">
-            <h3>ROI</h3>
-            <div class="fin-value" id="finRoi">0%</div>
-          </div>
-        </div>
-
-        <div class="charts-row">
-          <div class="chart-card">
-            <h3>Value Projection</h3>
-            <div class="chart-placeholder" id="projectionChart">
-              <!-- Simple visual bars rendered by JS -->
-            </div>
-          </div>
-          <div class="chart-card">
-            <h3>Portfolio Breakdown</h3>
-            <div class="chart-placeholder" id="breakdownChart"></div>
-          </div>
-        </div>
       </div>
 
       <!-- Map Content -->
@@ -462,39 +282,6 @@
           <span class="legend-item" data-status="growing"><span class="dot warning"></span> Warning</span>
           <span class="legend-item" data-status="attention"><span class="dot alert"></span> Alert</span>
         </div>
-      </div>
-
-      <!-- Doctor Content -->
-      <div id="doctorContent" class="content-section">
-        <div class="page-header">
-          <h2>Plant Doctor</h2>
-          <p>AI-powered diagnosis and plant health tracking</p>
-        </div>
-        <div class="doctor-layout">
-          <div class="doctor-chat">
-            <div class="chat-display" id="doctorChatDisplay">
-              <div class="bot-msg">Hello! I'm your AI Plant Doctor. Upload a photo or describe a symptom to get
-                started.
-              </div>
-              <div class="bot-msg">You can ask me about pests, diseases, or general care tips!</div>
-            </div>
-            <div class="doctor-input-area">
-              <input type="file" id="doctorFileInput" accept="image/*" style="display: none;">
-              <button class="icon-btn" id="btnDoctorCamera" title="Upload Photo">📷</button>
-              <input type="text" id="doctorInput" placeholder="Describe symptoms or ask a question...">
-              <button class="send-btn" id="doctorSendBtn">Send</button>
-            </div>
-          </div>
-          <div class="issue-log">
-            <h3>Recent Diagnoses</h3>
-            <div id="issueLogList" class="issue-list">
-              <div style="padding: 20px; text-align: center; color: #94a3b8;">
-                Loading diagnoses...
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- Plant Details Content -->
@@ -577,6 +364,28 @@
     </div>
   </div>
 
+  <!-- Profile Setup Modal -->
+  <div id="profileSetupModal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="padding: 32px; border-radius: 16px;">
+      <div class="modal-header" style="margin-bottom: 20px;">
+        <h2 style="color: var(--primary); margin: 0;">🌱 Set Up Your Profile</h2>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); line-height: 1.6;">Welcome to AgarwoodTrackerPH! Please enter your name
+          to complete your profile setup.</p>
+        <div class="form-group" style="margin-top: 24px;">
+          <label for="setupUsername" style="font-weight: 600; margin-bottom: 8px; display: block;">Full Name</label>
+          <input type="text" id="setupUsername" class="input" placeholder="e.g. Juan Dela Cruz" style="width: 100%;" />
+        </div>
+        <div style="margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-primary" id="btnSaveProfile"
+            style="width: 100%; justify-content: center; padding: 14px;">Save Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toasts -->
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
@@ -586,7 +395,6 @@
   <script src="js/data.js"></script>
   <script type="module" src="js/config.js"></script>
   <script type="module" src="js/auth-interceptor.js"></script>
-  <script src="js/plantdoctor.js"></script>
   <script type="module" src="js/dashboard.js?v=5"></script>
 </body>
 

@@ -97,29 +97,6 @@ const stewardApplicationSchema = z.object({
 });
 
 // =============================================
-// COMMUNITY SCHEMAS
-// =============================================
-
-const createPostSchema = z.object({
-    author: z.string().max(100).optional(),
-    author_email: z.string().email('Invalid author email'),
-    avatar: z.string().optional(),
-    content: z.string().max(5000, 'Post too long').optional(),
-    type: z.enum(['Tips', 'Question', 'Showcase', 'Discussion']).optional()
-});
-
-const createCommentSchema = z.object({
-    author: z.string().max(100).optional(),
-    author_email: z.string().email('Invalid author email'),
-    avatar: z.string().optional(),
-    content: z.string().min(1, 'Comment required').max(1000, 'Comment too long')
-});
-
-const likePostSchema = z.object({
-    email: z.string().email('Invalid email')
-});
-
-// =============================================
 // MESSAGE SCHEMAS
 // =============================================
 
@@ -176,11 +153,6 @@ module.exports = {
     createRoutineSchema,
     addInventorySchema,
     stewardApplicationSchema,
-
-    // Community
-    createPostSchema,
-    createCommentSchema,
-    likePostSchema,
 
     // Messages
     sendMessageSchema,

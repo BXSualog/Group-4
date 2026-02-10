@@ -5288,3 +5288,232 @@ input:checked+.slider:before {
   opacity: 0;
   transform: translateY(-5px);
 }
+
+/* ===================================
+   SATELLITE LIVE OVERLAY
+   =================================== */
+.satellite-live-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  overflow: hidden;
+  display: none;
+  /* Hidden by default */
+  background: radial-gradient(circle at center, transparent 30%, rgba(0, 20, 10, 0.2) 100%);
+}
+
+.satellite-live-overlay.active {
+  display: block;
+  animation: crtFlicker 0.15s infinite;
+}
+
+/* Scanning Beam */
+.scanning-beam {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(16, 185, 129, 0.05) 50%,
+      rgba(16, 185, 129, 0.2) 95%,
+      rgba(16, 185, 129, 0.8) 100%);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  animation: scanMove 4s linear infinite;
+}
+
+/* UI Elements */
+.sat-ui-panel {
+  position: absolute;
+  padding: 16px;
+  color: #10b981;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(16, 185, 129, 0.8);
+  pointer-events: none;
+}
+
+.sat-ui-top-left {
+  top: 20px;
+  left: 20px;
+  border-left: 2px solid #10b981;
+  border-top: 2px solid #10b981;
+}
+
+.sat-ui-top-right {
+  top: 20px;
+  right: 20px;
+  border-right: 2px solid #10b981;
+  border-top: 2px solid #10b981;
+  text-align: right;
+}
+
+.sat-ui-bottom-left {
+  bottom: 20px;
+  left: 20px;
+  border-left: 2px solid #10b981;
+  border-bottom: 2px solid #10b981;
+}
+
+.sat-ui-bottom-right {
+  bottom: 20px;
+  right: 20px;
+  border-right: 2px solid #10b981;
+  border-bottom: 2px solid #10b981;
+  text-align: right;
+}
+
+.sat-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+@keyframes scanMove {
+  0% {
+    top: -20%;
+  }
+
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes crtFlicker {
+  0% {
+    opacity: 0.98;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.99;
+  }
+}
+
+.sat-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: #065f46;
+  box-shadow: 0 0 5px rgba(10, 185, 129, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.sat-status-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+  animation: pulse 1s infinite;
+}
+
+/* Simulated Live Video Aesthetic */
+.live-video-feed::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
+  z-index: 999;
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.live-video-feed .leaflet-container {
+  filter: contrast(1.1) brightness(1.1) saturate(1.2);
+  animation: mapJitter 5s infinite;
+}
+
+/* Night Mode Filter */
+.night-mode .leaflet-container {
+  filter: contrast(1.1) brightness(0.5) saturate(0.8) hue-rotate(200deg) !important;
+}
+
+.night-mode .satellite-live-overlay {
+  background: radial-gradient(circle at center, transparent 30%, rgba(0, 10, 30, 0.4) 100%);
+}
+
+@keyframes mapJitter {
+  0% {
+    transform: scale(1.01) translate(0, 0);
+  }
+
+  25% {
+    transform: scale(1.011) translate(0.1px, 0.1px);
+  }
+
+  50% {
+    transform: scale(1.01) translate(-0.1px, 0.1px);
+  }
+
+  75% {
+    transform: scale(1.012) translate(0.1px, -0.1px);
+  }
+
+  100% {
+    transform: scale(1.01) translate(0, 0);
+  }
+}
+
+.sat-ui-panel br {
+  margin-bottom: 4px;
+}
+
+/* Premium Lock UI */
+.premium-lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  color: white;
+  text-align: center;
+  padding: 40px;
+  border-radius: inherit;
+}
+
+.lock-icon-lg {
+  font-size: 64px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
+}
+
+.premium-lock-overlay h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.premium-lock-overlay p {
+  color: var(--gray-300);
+  max-width: 400px;
+  margin-bottom: 24px;
+}

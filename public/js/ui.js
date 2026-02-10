@@ -176,8 +176,6 @@ function updateBreadcrumbs(plant = null) {
         tasks: "Dashboard › Care Tasks",
         financials: "Dashboard › Financial Analytics",
         map: "Dashboard › Farm Map",
-        doctor: "Dashboard › Plant Doctor",
-        community: "Community",
         stewards: "Find a Steward"
     };
 
@@ -229,6 +227,22 @@ function updateNavProfile(profile) {
             nameHtml += ' <span class="premium-badge-mini" title="Premium Subscriber" style="font-size: 0.8em; color: #a855f7;">💎</span>';
         }
         nameEl.innerHTML = nameHtml;
+
+        // Custom: If it says Setup Profile, make it clickable to open modal
+        if (!profile.username) {
+            nameEl.style.cursor = 'pointer';
+            nameEl.onclick = (e) => {
+                e.stopPropagation();
+                openProfileSetupModal();
+            };
+            if (avatarEl) {
+                avatarEl.style.cursor = 'pointer';
+                avatarEl.onclick = (e) => {
+                    e.stopPropagation();
+                    openProfileSetupModal();
+                };
+            }
+        }
     }
     if (avatarEl) {
         avatarEl.textContent = profile.avatar || profile.username?.charAt(0).toUpperCase() || "?";
@@ -245,6 +259,55 @@ function updateNavProfile(profile) {
         if (profile.subscription_tier === 'premium') roleText = '💎 Premium ' + roleText;
         roleLabel.textContent = roleText;
     }
+
+    const adminBtn = document.getElementById("btnAdminPanel");
+    if (adminBtn) {
+        adminBtn.style.display = profile.role === 'admin' ? 'flex' : 'none';
+        adminBtn.onclick = () => window.location.href = 'admin.html';
+    }
+}
+
+function openProfileSetupModal() {
+    const modal = document.getElementById("profileSetupModal");
+    if (!modal) return;
+    modal.classList.add("active");
+
+    const saveBtn = document.getElementById("btnSaveProfile");
+    const usernameInput = document.getElementById("setupUsername");
+
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            const username = usernameInput.value.trim();
+            if (!username) {
+                toast("Please enter your name");
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving...";
+
+            const email = localStorage.getItem("pm_user_email");
+            const success = await api.updateProfile({ email, username });
+
+            if (success) {
+                toast("Profile set up successfully!");
+                modal.classList.remove("active");
+                localStorage.setItem("pm_user_name", username);
+                // Refresh profile in navbar
+                const updatedProfile = await api.fetchUserProfile(email);
+                updateNavProfile(updatedProfile);
+            } else {
+                toast("Failed to save profile. Try again.");
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Save Profile";
+            }
+        };
+    }
+
+    const backdrop = modal.querySelector(".modal-backdrop");
+    const closeBtn = modal.querySelector(".close-modal");
+    if (backdrop) backdrop.onclick = () => modal.classList.remove("active");
+    if (closeBtn) closeBtn.onclick = () => modal.classList.remove("active");
 }
 
 // ===================================
@@ -356,6 +419,17 @@ function createPlantCard(plant) {
                 el('button', { className: 'view-details-btn', style: { flex: 1 } }, 'View Details'),
                 plant.coords ? el('button', {
                     className: 'btn btn-outline btn-sm',
+                    title: 'Live Satellite',
+                    onclick: (e) => {
+                        e.stopPropagation();
+                        // Navigate to map and trigger live mode
+                        localStorage.setItem('pm_currentPage', 'map');
+                        localStorage.setItem('pm_pending_live_sat_id', plant.id);
+                        window.location.reload();
+                    }
+                }, '📡') : null,
+                plant.coords ? el('button', {
+                    className: 'btn btn-outline btn-sm',
                     onclick: (e) => {
                         e.stopPropagation();
                         document.dispatchEvent(new CustomEvent('view-plant-on-map', { detail: plant.id }));
@@ -462,7 +536,16 @@ function renderPlantDetailsUI(plant) {
                 createStickyRow('Status', statusText),
                 createStickyRow('Height', `${plant.height} cm`),
                 createStickyRow('Last Watered', formatDateTime(plant.last_watered)),
-                createStickyRow('Soil', plant.soil_type)
+                createStickyRow('Soil', plant.soil_type),
+                plant.coords ? el('button', {
+                    className: 'btn btn-primary',
+                    style: { width: '100%', marginTop: '16px', background: '#6366f1', justifyContent: 'center' },
+                    onclick: () => {
+                        localStorage.setItem('pm_currentPage', 'map');
+                        localStorage.setItem('pm_pending_live_sat_id', plant.id);
+                        window.location.reload();
+                    }
+                }, '📡 LIVE SATELLITE') : null
             )
         )
     );
@@ -592,102 +675,6 @@ function renderMessages(messages) {
     area.scrollTop = area.scrollHeight;
 }
 
-// Community Feed
-function renderCommunityFeed() {
-    const feedContainer = document.getElementById("communityFeed");
-    if (!feedContainer) return;
-    const email = localStorage.getItem("pm_user_email");
-
-    feedContainer.innerHTML = "";
-    if (state.communityData.length === 0) {
-        feedContainer.appendChild(el('div', { className: 'empty-state-message' }, 'No posts found'));
-        return;
-    }
-
-    state.communityData.forEach(post => {
-        const isOwner = post.author_email === email;
-        const isAdmin = post.author_email === 'brynnsualog@gmail.com';
-
-        const postEl = el('div', { className: `community-post ${post.is_pinned ? 'pinned' : ''}` },
-            post.is_pinned ? el('div', { className: 'pinned-badge' }, '📌 Pinned Post') : null,
-            el('div', { className: 'post-header' },
-                el('div', { className: 'post-avatar' }, post.avatar || '👤'),
-                el('div', { className: 'post-meta' },
-                    el('h4', {},
-                        post.author + ' ',
-                        isAdmin ? el('span', { className: 'author-badge admin' }, 'Admin') : null,
-                        post.is_steward ? el('span', { className: 'author-badge steward' }, 'Steward') : null
-                    ),
-                    el('span', { className: 'realtime-timestamp' }, timeAgo(post.created_at))
-                ),
-                el('div', { style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' } },
-                    el('span', { className: 'post-type-badge' }, post.type),
-                    isAdmin ? el('button', {
-                        className: 'action-btn',
-                        title: 'Pin Post',
-                        onclick: () => window.togglePin(post.id) // Legacy bridge
-                    }, post.is_pinned ? '📍 Unpin' : '📌 Pin') : null,
-                    (isOwner || isAdmin) ? el('button', {
-                        className: 'action-btn',
-                        title: 'Delete Post',
-                        style: { fontSize: '16px', color: 'var(--danger)', padding: '4px' },
-                        onclick: () => window.handleDeletePost(post.id) // Legacy bridge
-                    }, '🗑️') : null
-                )
-            ),
-            el('div', { className: 'post-content' }, createLinkifiedContent(post.content || '')),
-            post.media_url ? el('div', { className: 'post-media' },
-                post.media_type === 'video' ?
-                    el('video', { src: `${API_BASE_URL}${post.media_url}`, controls: true }) :
-                    el('img', {
-                        src: `${API_BASE_URL}${post.media_url}`,
-                        className: 'community-img-trigger',
-                        onclick: () => openImageModal(`${API_BASE_URL}${post.media_url}`)
-                    })
-            ) : null,
-            el('div', { className: 'post-actions' },
-                el('button', { className: `action-btn ${post.isLiked ? 'liked' : ''}`, onclick: (e) => window.imgLike(post.id, e.currentTarget) },
-                    el('span', {}, post.isLiked ? '❤️' : '🤍'),
-                    el('b', {}, ` ${post.likes}`)
-                ),
-                el('button', { className: 'action-btn', onclick: () => window.toggleComments(post.id) },
-                    el('span', {}, '💬'),
-                    ` Comment (${post.commentCount})`
-                )
-            ),
-            el('div', { id: `comments-${post.id}`, className: 'comment-section', style: { display: 'none' } },
-                el('div', { className: 'comment-list', id: `comment-list-${post.id}` }),
-                el('div', { className: 'comment-input-area' },
-                    el('input', { type: 'text', placeholder: 'Write a comment...', className: 'comment-input', id: `comment-input-${post.id}` }),
-                    el('button', { className: 'icon-btn', onclick: () => window.submitComment(post.id) }, '➤')
-                )
-            )
-        );
-
-        feedContainer.appendChild(postEl);
-    });
-}
-
-function renderComments(postId, comments) {
-    const list = document.getElementById(`comment-list-${postId}`);
-    if (!list) return;
-    list.innerHTML = "";
-
-    if (comments.length === 0) {
-        list.appendChild(el('div', { style: { padding: '10px', fontSize: '12px', color: '#999' } }, 'No comments yet.'));
-        return;
-    }
-
-    comments.forEach(c => {
-        list.appendChild(el('div', { className: 'comment-item' },
-            el('div', { className: 'user-avatar mini', style: { width: '24px', height: '24px', fontSize: '12px' } }, c.avatar || '👤'),
-            el('div', { className: 'comment-content' },
-                el('h5', {}, c.author, el('span', {}, ` ${timeAgo(c.created_at)}`)),
-                el('p', {}, c.content)
-            )
-        ));
-    });
-}
 
 // ===================================
 // RENDERERS
@@ -1523,7 +1510,10 @@ export async function renderSubscriptionPage() {
     const myQuota = quotas[userTier] || { img_limit: 3, deep_scan_limit: 1 };
 
     const imgLimit = myQuota.img_limit === -1 ? 'Unlimited' : myQuota.img_limit;
-    const deepLimit = myQuota.deep_scan_limit === -1 ? '5/diagnosis' : myQuota.deep_scan_limit;
+    const deepLimit = myQuota.deep_scan_limit === -1 ? 'Unlimited' : (isPremium ? 'Unlimited' : myQuota.deep_scan_limit);
+
+    const imgDisplay = (isPremium || imgLimit === 'Unlimited') ? 'Unlimited' : `${imgUsed} / ${imgLimit}`;
+    const deepDisplay = (isPremium || deepLimit === 'Unlimited') ? 'Unlimited' : `${deepUsed} / ${deepLimit}`;
 
     host.innerHTML = '';
     host.appendChild(el('div', { className: 'subscription-dashboard', style: { display: 'flex', flexDirection: 'column', gap: '24px', padding: '20px 0' } },
@@ -1640,7 +1630,7 @@ export async function renderSubscriptionPage() {
                     el('div', { style: { fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' } }, 'Image Analysis'),
                     el('span', { style: { fontSize: '0.8em', background: 'var(--gray-100)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)' } }, 'Weekly')
                 ),
-                el('div', { style: { fontSize: '2em', fontWeight: '800', color: 'var(--text-primary)' } }, `${imgUsed} / ${imgLimit}`),
+                el('div', { style: { fontSize: '2em', fontWeight: '800', color: 'var(--text-primary)' } }, imgDisplay),
                 el('div', { className: 'progress-bg', style: { height: '8px', background: 'var(--gray-100)', borderRadius: '4px', marginTop: '16px', overflow: 'hidden' } },
                     el('div', { style: { height: '100%', width: imgLimit === 'Unlimited' ? '100%' : `${Math.min(100, (imgUsed / imgLimit) * 100)}%`, background: 'var(--primary)', borderRadius: '4px', transition: 'width 1s ease-out' } })
                 )
@@ -1650,9 +1640,9 @@ export async function renderSubscriptionPage() {
                     el('div', { style: { fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' } }, 'AI Deep Scans'),
                     el('span', { style: { fontSize: '0.8em', background: 'var(--gray-100)', padding: '4px 8px', borderRadius: '8px', color: 'var(--text-secondary)' } }, 'Weekly')
                 ),
-                el('div', { style: { fontSize: '2em', fontWeight: '800', color: 'var(--text-primary)' } }, `${imgUsed} / ${deepLimit}`),
+                el('div', { style: { fontSize: '2em', fontWeight: '800', color: 'var(--text-primary)' } }, deepDisplay),
                 el('div', { className: 'progress-bg', style: { height: '8px', background: 'var(--gray-100)', borderRadius: '4px', marginTop: '16px', overflow: 'hidden' } },
-                    el('div', { style: { height: '100%', width: (deepLimit === '5/diagnosis' || deepLimit === -1) ? '100%' : `${Math.min(100, (deepUsed / deepLimit) * 100)}%`, background: '#a855f7', borderRadius: '4px', transition: 'width 1s ease-out' } })
+                    el('div', { style: { height: '100%', width: (isPremium || deepLimit === 'Unlimited' || deepLimit === -1) ? '100%' : `${Math.min(100, (deepUsed / deepLimit) * 100)}%`, background: '#a855f7', borderRadius: '4px', transition: 'width 1s ease-out' } })
                 )
             )
         ),
@@ -1673,7 +1663,7 @@ export async function renderSubscriptionPage() {
                         ['Plant Health Monitoring', '✅', '✅'],
                         ['Unlimited AI Chat', '✅', '✅'],
                         ['Image Analysis (Weekly)', (quotas.free?.img_limit || 3), 'Unlimited'],
-                        ['Deep Scan Logic', (quotas.free?.deep_scan_limit || 1), '5 per diagnosis'],
+                        ['Deep Scan Logic', (quotas.free?.deep_scan_limit || 1), 'Unlimited'],
                         ['Steward Priority', '❌', '✅'],
                         ['Ad-free Experience', '❌', '✅']
                     ].map((row, idx) => el('tr', { style: { background: idx % 2 === 0 ? 'var(--gray-50)' : 'transparent', borderRadius: '12px' } },

@@ -140,7 +140,7 @@ function setupListeners(email) {
             btnEnroll.disabled = true;
             btnEnroll.textContent = "Processing...";
             try {
-                const apiHost = location.port === '3000' ? '' : 'http://127.0.0.1:3000';
+                const apiHost = location.port === '3001' ? '' : 'http://127.0.0.1:3001';
                 const resp = await fetch(`${apiHost}/api/enroll-steward`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

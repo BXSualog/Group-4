@@ -7,7 +7,7 @@ const isLocal = window.location.hostname === 'localhost' || window.location.host
 // ⚠️ REPLACE THIS URL WITH YOUR ACTUAL RENDER/RAILWAY URL AFTER DEPLOYING BACKEND ⚠️
 const PROD_BACKEND_URL = 'https://bx-plant-monitoring.onrender.com';
 
-export const API_BASE_URL = isLocal ? 'http://localhost:3000' : PROD_BACKEND_URL;
+export const API_BASE_URL = isLocal ? 'http://localhost:3001' : PROD_BACKEND_URL;
 
 console.log(`[Config] Running on ${isLocal ? 'Localhost' : 'Production'}. API: ${API_BASE_URL}`);
 
