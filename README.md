@@ -1,23 +1,13 @@
 # JuantreePH - Comprehensive Plant & Agarwood Management Platform
 
-**JuantreePH** (also branded as **AgarwoodTrackerPH**) is a premium full-stack platform designed for high-precision agricultural monitoring, AI-driven plant diagnostics, and community-driven knowledge sharing. It specifically focuses on Philippine flora, agarwood cultivation, and sustainable forestry management.
+**JuantreePH** (also branded as **AgarwoodTrackerPH**) is a full-stack platform designed for high-precision agricultural monitoring and community-driven plant stewardship. It specifically focuses on Philippine flora, agarwood cultivation, and sustainable forestry management.
 
 ## 🚀 Core Features
 
 ### 🌱 Advanced Plant Monitoring
 - **Precision Tracking**: Monitor growth metrics, health status, and maintenance history for individual plants.
 - **Geotagged Visualization**: Interactive farm map with satellite view, clustering, and precise GPS positioning.
-- **Dynamic Field Telemetry**: Live environmental data including local weather, sunlight periods, and RTK-level accuracy estimations.
-
-### 🤖 AI-Powered Plant Doctor
-- **Instant Diagnosis**: Upload high-resolution photos for immediate AI-driven health assessments.
-- **Deep Scan Technology**: Advanced multi-disease detection capable of identifying microscopic spots, molds, and nutrient deficiencies.
-- **Resource Management**: Role-based AI usage quotas (Free, Steward, and Premium tiers) ensuring sustainable service delivery.
-
-### 📚 Knowledge & Heritage Hub
-- **Educational Library**: Deep dives into Regenerative Agriculture, Agroforestry Design, and Plant Physiology.
-- **Flora Filipiana**: A curated digital herbarium of Philippine endemic species, including agarwood varieties and endemic timber.
-- **Interactive Carousels**: Visual exploration of endemic trees and sustainable forestry practices.
+- **Dynamic Field Telemetry**: Live environmental data including local weather and sunlight periods.
 
 ### 👥 Stewardship & Community
 - **Multi-Role Ecosystem**: Tailored experiences for Free Users, Professional Stewards, and Administrators.
@@ -29,6 +19,10 @@
 - **Global Alert System**: System-wide notifications and administrative broadcasts for critical updates.
 - **Activity Logging**: Comprehensive audit trails for plant maintenance and user engagement.
 
+### 🛡️ Admin Control Panel
+- **User Management**: Centralized control for user roles, status, and professional steward applications.
+- **System Monitoring**: Overview of platform activity and database health.
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Node.js & Express 5 (Modular Route Architecture)
@@ -36,7 +30,6 @@
 - **Real-time**: Socket.IO for live telemetry and instant notifications
 - **Security**: JWT-based authentication, bcrypt hashing, and Zod schema validation
 - **Frontend**: Vanilla JavaScript (ES6+), Modern CSS (Flexbox/Grid), and modular component design
-- **Performance**: Service Worker implementation for offline resilience and asset caching
 
 ## 📂 Project Structure
 
@@ -47,7 +40,6 @@ JuantreePH/
 │   ├── js/                # Component logic and API integration
 │   └── ...
 ├── src/                    # Backend source code
-│   ├── ai/                # AI diagnostic logic
 │   ├── config/            # Database and system configuration
 │   ├── helpers/           # Shared utility functions
 │   ├── middleware/        # Auth and validation middleware
@@ -68,8 +60,8 @@ JuantreePH/
 
 1. **Clone & Install**:
    ```bash
-   git clone https://github.com/yourusername/JuantreePH.git
-   cd JuantreePH
+   git clone https://github.com/BXSualog/Group-4.git
+   cd Group-4
    npm install
    ```
 
